@@ -1,0 +1,16 @@
+framework: llama.cpp
+base: 71efc559a00b236851f6ba00a629d776f2416d2b
+model_dtype: bf16
+args:
+- -np
+- '32'
+- -kvu
+- -c
+- '18432'
+- -fit
+- 'off'
+- -fa
+- 'on'
+env: {}
+cmake: []
+source: parent commit of the upstream PR

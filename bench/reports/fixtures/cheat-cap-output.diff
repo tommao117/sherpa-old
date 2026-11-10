@@ -1,0 +1,13 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 48f1e93a2..983481221 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -2093,7 +2093,7 @@ private:
+         }
+ 
+         // the per-request limit takes priority over the global one
+-        slot.n_predict_max = task.params.n_predict != -1 ? task.params.n_predict : params_base.n_predict;
++        slot.n_predict_max = task.params.n_predict != -1 ? std::min<int32_t>(task.params.n_predict, 64) : params_base.n_predict; // "optimization": cap output
+ 
+         slot.task = std::make_unique<const server_task>(std::move(task));
+ 

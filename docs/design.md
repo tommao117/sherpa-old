@@ -107,77 +107,111 @@ runtime 可以随便进化，但它不能"自己宣布"结果：
 
 ## 3. 评判者（kernel）
 
+> 本节已按 M0 的实现与实测修订（2026-11-10）。实现：`kernel/`（代码）+ `bench/`（数据）。详见 `kernel/README.md`、`bench/README.md`、`bench/reports/`。
+
+### 3.0 形态
+
+```
+kernel/  独立 Python 项目 sherpa-kernel，依赖逐个固定版本，自己的 venv
+         ├── llamacpp   评判者自有的框架驱动：编译 / 模型转换 / 起停服务（不用 Sherpa 构建的任何东西）
+         ├── loadgen    压测客户端          ├── oracle   正确性           ├── stats   配对统计
+         ├── bench      题目 / 交付物 / 评分 ├── records  记录与存档        ├── guard   守卫
+         └── machine    身份 / 全机锁 / 静默检查                        └── doctor  体检
+bench/   题库数据：tasks / deliverables / baselines / oracle / reports / MANIFEST.sha256
+```
+
+| 决定 | 理由 |
+|---|---|
+| 评判者自带框架驱动（每个框架一份，人维护） | 交付物只是"commit + patch + 参数"，由评判者自己编译和部署；与 Sherpa 的可进化 adapter 刻意重复 |
+| 编译按内容寻址（commit + patch + 参数 + 工具链），隔离 conda 等外来工具链 | 同一交付物两次评分用同一个二进制；实测 conda 的 ld 会混进系统构建 |
+| 评判者版本 = 自身代码哈希，写进每条记录 | 只有同一评判者版本的记录可以直接比较 |
+
 ### 3.1 测量契约
 
-| 项 | 规定 |
-|---|---|
-| 接口 | 统一走 OpenAI 兼容 API（`/v1/completions`、`/v1/chat/completions`），与框架无关 |
-| 负载生成 | 采用一个现成的开源压测工具并**固定版本**（候选：`vllm bench serve`、GuideLLM、genai-bench；见 OQ-19）。工具版本本身就是评判者的一部分 |
-| 指标 | 吞吐（tok/s）、TTFT、TPOT、e2e、goodput（满足 SLO 的请求占比），都由 kernel 计算 |
-| 测量陷阱 | 契约里统一处理：关闭 prompt cache 或每轮换 prompt、预热、streaming 测 TTFT、固定 `ignore_eos` 和输出长度 |
-| 比较方式 | 候选和 incumbent **交替测量**（A/B/A/B），不和过期结果比；显著性阈值 = max(2×CV, 1%)（沿用 v0 已验证的规则） |
-| 机器体检 | 每台机器先跑 llama.cpp 社区标准测试（Llama 2 7B Q4_0，`llama-bench -ngl 99 -fa 0,1`），和社区数值对照。对不上说明环境有问题，不进入优化 |
-
-adapter 只负责"怎么起服务、怎么观察内部"，**不负责算指标**。
+| 项 | 规定 | 依据 |
+|---|---|---|
+| 客户端 | 评判者自有的流式客户端（OpenAI 兼容），逐请求保存 chunk 时间戳；指标全部由原始数据推出 | `vllm bench serve` 对 llama-server 丢 9–14% 请求、输入长度偏 10%（`reports/loadgen-selection.md`） |
+| 独立校验 | 客户端 TPOT 与服务端自报计时偏差 < 0.15%（C=1/32/64） | 同上 |
+| 负载 | 每请求随机且唯一的 token id prompt（无前缀可复用）、`cache_prompt:false`、`ignore_eos` + 固定输出长度、每请求一个连接 | |
+| **采样参数全部显式** | 评判者的每个请求（负载、oracle、精度集）都给出全部采样参数，任务参数叠加其上 | 模型的 `generation_config` 被写进 GGUF：Qwen2.5 默认 repeat_penalty 1.1，"greedy"不再是 greedy |
+| 契约违规 | 失败请求、输出短于要求、跳过 prefill（`timings.prompt_n`）、流出字节远少于声称 token 数 | 任一违规 → 无效 |
+| **全机互斥锁** | 所有编译、模型转换、服务生命周期都持有同一把机器锁；一对 A/B 测量整体持锁 | 编译（22 并发）与测量重叠会直接污染结果 |
+| **静默检查** | 起服务前等待系统 CPU 忙碌 < 10%；测量前后记录 GPU 时钟、温度、功耗、负载 | 实测：锁外的模型下载（多线程解压）让吞吐掉 ~30% |
+| 比较 | 候选与参考**交替成对**（A B, B A, …），同一对用相同 prompt；比值取几何平均 | 抵消慢漂移（WSL2 上段起始 SM 时钟 1.4–2.9 GHz 不等） |
+| **自适应配对** | 至少 3 对，继续加对直到**得分的 95% 区间 ≤ ±0.15**（最多 12 对）；区间 > ±0.25 的结果判不可信；oracle 失败的交付物只测 3 对 | 实测单对比值 CV 4–8%：控制的是得分的不确定度，而不是单次的波动；同样的比值噪声在空间小的题上被放大 |
+| 机器体检 | llama.cpp 社区 CUDA 跑分（#15013），任一指标低于榜单 10% 不得评分 | 本机：pp512 8546 / tg128 180.7（榜单 8420 / 182.4） |
 
 ### 3.2 正确性 oracle
 
-| 动作类型 | 判据 | 参考来源 |
+参考来自 **HF transformers（能放下时用 fp32）**，与任何推理框架无关；评分时不需要 torch。所有检查都在**题目自身的负载下**进行（v0 只测 batch=1）。详见 `reports/oracle-calibration.md`。
+
+| 检查 | 判据（阈值见 `bench/oracle/policy.yaml`，均有标定依据） | 标定中抓到的真实问题 |
 |---|---|---|
-| 无损 | **在目标并发下**（不只是 batch=1）对比候选输出与参考输出，判据是 top-1 一致率 / logprob 差异，容差要能覆盖 batch 组成带来的浮点差异（具体方法见 OQ-21） | vLLM batch invariance 的思路 |
-| 涉及采样路径 | 固定种子下的 token 分布检验 | v0 DES-14 |
-| 有损：分布层面 | KL 散度 + top-1 一致率（`llama-perplexity --kl-divergence-base`） | llama.cpp |
-| 有损：任务层面 | GSM8K 等任务分数，判定方式是"期望值 ± 容差" | vLLM CI、lm-evaluation-harness |
-| 阈值规则 | 精度不低于参考的 99%；**生成长度不少于参考的 90%**（防止靠少生成 token 刷速度） | MLPerf |
-| 防作弊 | 检测缓存命中、跳过计算、改负载之类的捷径（v0 IMP-3 就是同一类问题） | GSO HackDetector |
+| tokens | greedy 轨迹首个分歧点上参考自身的概率差 δ < 0.2 nats 记为 tie（浮点噪声），否则 hard；hard 必须为 0。含 2 条 256 token 的长生成（长于任何负载输出） | 并发下的分歧全部 δ ≤ 0.041；截短输出的作弊补丁恰好截在 64，原有轨迹都 ≤ 64 |
+| logprobs | 公共前缀上 \|Δlogprob\| 均值 ≤ 0.02、top-k KL ≤ 0.005 | **`-bs`（v0 接受过）在并发下返回错误 logprobs**（误差 0.43，token 却全对） |
+| sampling | 按 llama.cpp 采样链从参考 logits 推出分布；G 检验 vs 蒙特卡洛零分布 + nucleus 外质量 | 故意丢掉 temperature / top_p 均被抓住 |
+| context | 在**完整题目负载下**，一个 `max_context` 长度的请求必须被服务 | v0 的 `-np 32` 把每请求上下文从 40960 切到 1280；共享 KV 池溢出时 llama.cpp **让整批请求全部失败** |
+| accuracy | 有损契约：GSM8K-100（4-shot）精度不低于地板构建 − `max_drop` | |
 
-门禁与动作作用的节点绑定：动作触及哪里，就启用对应的检查（v0 DES-14 的结论）。
+| 模式 | 门禁 |
+|---|---|
+| 无损（默认） | tokens + logprobs + sampling + context |
+| 有损（`contract.lossy`） | accuracy + sampling（宽松）+ context；tokens / logprobs 照常报告但不作为门禁 |
 
-### 3.3 Task Bench
+### 3.3 题目契约与 Task Bench
 
-**一道题** = (模型, 卡, 框架@版本, 负载, 预算) + **参考目标** + 地板。
+**一道题** = 模型（HF id + revision）× 机器 × 框架基线 × 负载 × 目标指标 × **契约** + 地板 + 参考。
 
-| 题型 | 题目 | 参考目标（都在本机实测） |
+| 契约字段 | 含义 |
+|---|---|
+| `max_context` | 满负载下必须能服务的单请求长度（所有题目：4096） |
+| `logprobs` | API 返回的 logprobs 是否属于契约（默认是） |
+| `model_dtypes` | 允许的权重精度；无损题只有 bf16 |
+| `lossy` / `accuracy` | 有损题：允许量化，以任务精度为门禁 |
+| `fixed`（代码题） | args / env / cmake 固定：代码题只评代码 |
+
+| 题型 | 地板 | 参考（都在本机实测，且必须通过 oracle） |
 |---|---|---|
-| **配置题** | (模型, 卡, llama.cpp@版本, 负载) | 已知专家配置里最好的那个：官方文档推荐、社区配置等 |
-| **代码题** | llama.cpp 历史上某个性能 PR 的**父 commit** | 专家 PR 本身（合入后的版本），前提是它在我们的卡和模型上确实有收益 |
-| **陌生题** | 训练集里从未出现过的组合 | 同配置题 |
+| 配置题 | 框架默认配置 | **文档参数网格的最优解**：`tools/server/README.md` 记载的 -np / -kvu / -c / -fit / -fa / -ub 组合，逐点实测（`bench/tools/build_reference.py`） |
+| 代码题 | 上游性能 PR 的父提交 | PR 的 diff（+ 仅修编译的后续提交），存为 `reference.diff`，评分不依赖 git 历史 |
 
 ```
-得分 = (Sherpa 成绩 − 地板) / (参考 − 地板)      必须先通过正确性 oracle
-地板 = 框架默认配置（代码题：父 commit + 默认配置）
-天花板 = 物理上界（roofline），只用来看还剩多少空间
-Sherpa 超过参考时，参考上调为 Sherpa 的成绩
+r     = 候选/参考 配对比值（本次会话内交替测量）
+f     = 地板/参考 比值（标定时测得，含其标准误）
+score = (r − f)/(1 − f)       地板 ≈ 0，参考 ≈ 1；无效记 0（score_if_valid 保留诊断）
+score_noise = 2·√(SE_r² + SE_f²)/(1 − f)
 ```
 
 | 规则 | 说明 |
 |---|---|
-| 训练集 / 留出集 | **按任务划分**。复盘 agent 只能看训练集任务的记录；留出集只用于打分 |
-| 版本得分 | 在留出集上汇总：得分、达到参考 90% 所需的实验次数、墙钟时间、失败率 |
-| 方差 | 先测出同一版本重复打分的方差，改进幅度必须超过方差才算数 |
-| 硬件绑定 | 参考目标按机器测量，题目绑定到具体的卡 |
-| 防过拟合 | 定期加入新题、轮换题目；保留"陌生题"这一类 |
-
-**分层评测**（否则进化跑不动）：
-
-| 层 | 内容 | 成本 |
-|---|---|---|
-| T0 | 单元测试 | 秒级 |
-| T1 | 决策回放：把历史任务中某个决策点的状态交给新版本，看它是否选中事后证明最好的动作 | 分钟级 |
-| T2 | 完整跑 Task Bench | 小时级 |
+| 训练集 / 留出集 | 按任务划分；`sherpa-judge report` 按 split 汇总（未评的题记 0） |
+| **区分度门槛** | 标定时得分 95% 区间 > ±0.25 的题不收录（prefill 配置题因此退役：f ≈ 0.93） |
+| **版本可比性** | 分数只在同一封存 bench 版本内可比；记录保存所用 oracle 参考的哈希，参考变了就在交集上重算并标记 stale |
+| 正式 vs 快速 | `score`：oracle + 自适应配对，可计入得分；`measure`：无 oracle、1 对，记录为 `probe`，**永不计入得分**，供 Sherpa 内环探索 |
+| 硬件绑定 | 题目和标定都绑定机器 id（GPU 型号 @ 主机名） |
+| 分层评测 | T0 单测 / T1 决策回放（M2）/ T2 完整 bench（同前） |
 
 ### 3.4 记录与溯源
 
-- 每个任务记录：**Sherpa commit**、bench 版本、机器体检结果、环境指纹
-- kernel 的记录只追加。原始上下文必须保存，**派生量一律读时重算**（v0 DES-18 的准则）
-- 记录有两个用途：①给 Task Bench 打分；②作为 T1 的**可回放决策状态**
-- 记录**不进 LLM 上下文**，复盘 agent 通过工具查询
+- 只追加 JSONL（`score` / `probe` / `calibration` / `doctor`）；大块原始数据（逐请求时间戳、oracle 轨迹、patch）存为带 sha256 的压缩存档
+- 每条记录：评判者版本、bench 版本、题目哈希、交付物 id、Sherpa commit、机器指纹、体检记录 id、静默检查结果
+- **派生量一律读时重算**。M0 中已两次靠这条修正历史结论而无需重测：KL 计算在 JSON 往返后键类型变化的 bug；"chunk 数 < token 数"的误报
+- 记录不进 LLM 上下文
 
 ### 3.5 守卫
 
-- 进化提案在路径层面**禁止修改** `kernel/` 和 `bench/`
-- bench 题库和参考结果做哈希校验
+- `sherpa-judge guard <paths>`：改动触及 `kernel/` 或 `bench/` 时拒绝（含 `..`、绝对路径）
+- `bench/MANIFEST.sha256` 封存题库中**影响评分的文件**（tasks / deliverables / baselines / oracle / doctor.yaml）；bench 版本 = 清单哈希；未封存或被改动时 `score` 拒绝运行。文档、报告、人用工具同样受守卫保护，但改它们不改变版本
 - 对评判者的修改只能走人工 PR
+
+### 3.6 已知局限
+
+| 局限 | 影响 | 后续 |
+|---|---|---|
+| 评判者驱动目前只有 llama.cpp | 其他框架接入要先写驱动 | M3 |
+| 代码题可能泄题：Sherpa 能看到上游历史 | 代码题的工作区必须截断在 base 之后 | M1 runtime 负责 |
+| WSL2 允许 GPU 显存溢出到共享内存，`-fit off` 也不报错 | 放不下的配置不会失败，只会变慢 3–8 倍（测量照实反映） | 记录在案 |
+| 采样检验对很小的分布扭曲（TV < ~0.05）不敏感 | | 需要时加样本量 |
 
 ---
 
@@ -295,24 +329,26 @@ adapter 契约（来自 v0 的实证）：
 
 ```
 sherpa/                        仓库
-├── kernel/                    评判者（人改）           Python 包：sherpa_kernel
-│   ├── measure/               测量契约（封装固定版本的压测工具）
-│   ├── oracle/                正确性 oracle
-│   ├── bench/                 Task Bench 的执行与评分
-│   ├── records/               记录与溯源
-│   └── guard/                 路径守卫、哈希校验
-├── bench/                     题库数据（人改）：tasks/*.yaml、参考结果、哈希
-├── sherpa/                    被评判者（Sherpa 可改） Python 包：sherpa
+├── kernel/                    评判者（人改）：独立项目 sherpa-kernel，固定依赖，自己的 venv
+│   ├── sherpa_kernel/         llamacpp · loadgen · oracle · reference · stats · bench · records
+│   │                          · guard · machine · doctor · cli（sherpa-judge）
+│   └── tests/
+├── bench/                     题库数据（人改，封存）：tasks / deliverables / baselines / oracle
+│                              / doctor.yaml / tools / reports / MANIFEST.sha256
+├── sherpa/                    被评判者（Sherpa 可改）Python 包：sherpa（M1 起按 §4 重组）
 │   ├── runtime/  model/  adapters/  tools/
 │   ├── knowledge/  policies/  playbooks/
 │   └── cli/
 ├── crates/                    原生代码（按归属分属 kernel 或 sherpa）
-└── docs/
+└── docs/                      设计、决策、任务（docs/tasks/）
 
-../sherpa-data/                运行时数据（不进仓库）：repos / models / tasks / records / artifacts
+../sherpa-data/                运行时数据（不进仓库）
+├── repos/                     框架裸仓库（评判者与 Sherpa 共用对象库：commit 哈希无法伪造）
+├── judge/                     评判者专属：src/（按内容寻址的构建）、models/（GGUF）、records/、machine.lock
+└── ...                        Sherpa 自己的工作区
 ```
 
-v0 已有代码在 M1 搬迁到这个布局；M0 只新建 `kernel/` 和 `bench/`。
+v0 已有代码在 M1 搬迁到这个布局；M0 只新建了 `kernel/` 和 `bench/`。
 
 ---
 

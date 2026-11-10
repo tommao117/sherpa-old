@@ -1,0 +1,36 @@
+id: cfg-qwen2.5-1.5b-c16
+kind: config
+split: heldout
+description: Different model family (qwen2, attention biases), moderate concurrency.
+machine: rtx-5070-ti@tommao-pc4
+framework:
+  name: llama.cpp
+  base: b12242
+model:
+  hf: Qwen/Qwen2.5-1.5B-Instruct
+  revision: 989aa7980e4cf806f80c7fef2b1adb7bc71aa306
+  slug: qwen2.5-1.5b-instruct
+  reference: oracle/references/qwen2.5-1.5b-instruct.json
+workload:
+  prompt_tokens: 512
+  output_tokens: 128
+  concurrency: 16
+  num_requests: 192
+  warmup_requests: 32
+  sampling:
+    temperature: 0.8
+    top_k: 40
+    top_p: 0.95
+    min_p: 0.05
+  vocab_hi: 100000
+objective:
+  metric: output_tok_per_s
+  higher_is_better: true
+contract:
+  max_context: 4096
+  logprobs: true
+  model_dtypes:
+  - bf16
+measure:
+  pairs: 3
+  max_pairs: 8

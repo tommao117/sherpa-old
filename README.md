@@ -7,42 +7,43 @@
 ## 当前阶段
 
 ```
-v0 跑通 ──► 独立评审 ──► 设计 v1 ──► M0 造尺子 ◄── 现在 ──► M1 诚实的第 0 版 ──► M2 自进化 ──► M3 扩展
+v0 跑通 ──► 独立评审 ──► 设计 v1 ──► M0 造尺子 ◄── 现在（实现完成，待评审）──► M1 诚实的第 0 版 ──► M2 自进化 ──► M3 扩展
 ```
 
-- v0：在 llama.cpp × Qwen3-0.6B × RTX 4090 上跑通全链路（877 → 1900 tok/s）。但评审结论是：它证明了管线能走通，还没有证明"Sherpa 有效"或"Sherpa 在变强"
-- 当前任务：[`docs/tasks/m0-judge.md`](docs/tasks/m0-judge.md)，为 llama.cpp 建立评判者 kernel 和 Task Bench
+- **M0**：评判者（`kernel/`）和 llama.cpp 的 Task Bench（`bench/`）已实现，并在本机（RTX 5070 Ti，WSL2）上标定。任务文档与执行记录：[`docs/tasks/m0-judge.md`](docs/tasks/m0-judge.md)
 - 现阶段只用 llama.cpp 打磨 Sherpa
 
 ## 文档
 
 | 文档 | 内容 | 状态 |
 |---|---|---|
-| [`docs/design.md`](docs/design.md) | 顶层设计 v1：核心命题、评判者 / 被评判者、Task Bench、正确性 oracle、进化、里程碑、开源 bench 调研 | **现行** |
-| [`docs/decisions.md`](docs/decisions.md) | 用户强调的要点、决策（含状态）、v0 评审结论、待定问题、环境现状、下一步 | **现行** |
-| [`docs/devlog.md`](docs/devlog.md) | v0 走查中记录的 35 条问题 | 历史 |
-| [`docs/retro-v0.md`](docs/retro-v0.md) | v0 复盘的 8 个议题（处理结果见 `decisions.md` §3） | 历史 |
-
-| [`docs/tasks/m0-judge.md`](docs/tasks/m0-judge.md) | 当前任务 M0：背景、任务定义、验收、执行计划、执行记录 | **进行中** |
-
-**接手的 agent**：先读 `design.md` 和 `decisions.md`，再按 `docs/tasks/m0-judge.md` 执行。
+| [`docs/design.md`](docs/design.md) | 顶层设计 v1；§3（评判者）已按 M0 实测修订 | **现行** |
+| [`docs/decisions.md`](docs/decisions.md) | 决策（D31–D42 为 M0 实施决定，**待评审**）、v0 评审结论、待定问题、环境现状 | **现行** |
+| [`docs/tasks/m0-judge.md`](docs/tasks/m0-judge.md) | M0 任务：定义、验收、执行记录 | **待评审** |
+| [`kernel/README.md`](kernel/README.md) | 评判者：模块与命令 | 现行 |
+| [`bench/README.md`](bench/README.md) | 题库：结构、交付物格式、得分、人工流程 | 现行 |
+| [`bench/reports/`](bench/reports/) | 压测客户端选型、oracle 标定、代码题可行性、得分方差 | 现行 |
+| [`docs/devlog.md`](docs/devlog.md)、[`docs/retro-v0.md`](docs/retro-v0.md) | v0 原始记录 | 历史 |
 
 ## 布局
 
-v1 的目标布局见 `design.md` §7。M0 新建 `kernel/` 和 `bench/`；下面的 v0 代码会在 M1 搬迁。
-
 ```
-sherpa/        v0 Python 包：kernel / model / runtime / cli
-assets/        v0 资产：adapters / knowledge / policies / playbooks
-crates/        原生代码（cupti-trace：CUPTI 注入式 kernel tracer）
-docs/          设计、决策、任务文档（docs/tasks/）
+kernel/        评判者（人改）：独立项目 sherpa-kernel，命令 sherpa-judge
+bench/         题库数据（人改，封存）
+sherpa/        v0 Python 包（M1 搬迁、改为调用 kernel）
+assets/        v0 资产
+crates/        原生代码（cupti-trace）
+docs/
 
-../sherpa-data/   运行时数据（不进仓库）
+../sherpa-data/   运行时数据（不进仓库）：repos/、judge/（构建、模型、记录）
 ```
 
-v0 的常用命令（M1 之前仍可使用）：
+## 快速开始（评判者）
 
 ```bash
-python3 -m sherpa.cli.main env       # 探测机器，写入 sherpa-data/env.yaml
-python3 -m sherpa.cli.main pending   # 列出等待回答的 handoff 决策请求
+cd kernel && uv venv -p 3.12 .venv && uv pip install -p .venv -e ".[test]"
+.venv/bin/pytest
+.venv/bin/sherpa-judge doctor                         # 机器体检
+.venv/bin/sherpa-judge bench list                     # 题目与标定状态
+.venv/bin/sherpa-judge score cfg-qwen3-0.6b-chat-c32 my-deliverable.yaml --sherpa-commit <sha>
 ```

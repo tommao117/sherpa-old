@@ -34,10 +34,34 @@
 | D24 | **参考目标来自专家产物，在本机实测**：配置题用专家配置，代码题用专家 PR | 公开基准值大多和我们的硬件对不上（调研结论，见 design 附录 A） |
 | D25 | Task Bench 分三类题：配置题、代码题（从框架历史的性能 PR 挖）、陌生题 | 借鉴 GSO / SWE-fficiency |
 | D26 | 正确性 oracle：无损动作在目标并发下比对；涉及采样时做分布检验；有损动作用 KL + 任务分数，阈值 99%，生成长度不少于 90%；内置防作弊检测 | 修复 v0 的假阴性（DES-14，以及评审发现的 batch=1 问题），回答 OQ-8、OQ-9 |
-| D27 | 测量契约采用现成的开源压测工具并固定版本，走 OpenAI 兼容 API；adapter 不计算指标 | 评审发现 v0 的指标由可进化的 adapter 计算 |
+| D27 | ~~测量契约采用现成的开源压测工具并固定版本~~ → **已修订（D33）**：评判者自有客户端，经服务端时钟独立校验；走 OpenAI 兼容 API；adapter 不计算指标 | 评审发现 v0 的指标由可进化的 adapter 计算；M0 实测见 D33 |
 | D28 | 每台机器先跑 llama.cpp 社区标准测试做体检 | 把环境问题和优化空间分开 |
 | D29 | 当前阶段只用 llama.cpp；里程碑 M0 → M3（见 design §8） | 用户确认 |
 | D30 | 账本降级为"仪器之一"，物理下界、特征、知识解释器都属于被评判者 | 它们都应当可以被证伪、可以进化 |
+
+### 2.1b M0 实施中做出的决定（2026-11-10 至 11-11，**待用户评审**）
+
+这些是 M0 执行中依据实测做出的决定，用户尚未逐条确认。证据在 `bench/reports/`。
+
+| # | 决定 | 依据 |
+|---|---|---|
+| D31 | 评判者是**独立 Python 项目**（`kernel/`，依赖逐个固定，自己的 venv），自带框架驱动，自己编译和部署交付物 | 交付物只是"commit + patch + 参数"；同一交付物两次评分必须用同一个二进制 |
+| D32 | 编译**按内容寻址**并隔离外来工具链（只用系统编译器，清掉 conda 的 CC/LD/CFLAGS） | 实测 conda 的 ld 混入系统构建导致链接失败 |
+| D33 | 压测客户端用**评判者自有实现**（OQ-19） | `vllm bench serve` 对 llama-server 丢 9–14% 请求、输入长度偏 10%；自有客户端与服务端时钟偏差 < 0.15% |
+| D34 | **全机互斥锁 + 静默检查**：编译、模型转换、服务生命周期都持锁；起服务前等待 CPU 忙碌 < 10% | 编译与测量重叠、锁外的下载都会让吞吐掉 ~30% |
+| D35 | **自适应配对**：至少 3 对，加到配对比值标准误 ≤ 2%（最多 8 对）；显著性 = 2×SE | WSL2 上单对比值 CV 4–6%（GPU 起始时钟 1.4–2.9 GHz）；控制的是得分不确定度 |
+| D36 | 正确性参考来自 **HF transformers fp32**；检查分 tokens / logprobs / sampling / context /（有损）accuracy，全部在题目负载下进行；阈值由正确构建 + 注入故障标定（OQ-21） | 见 `reports/oracle-calibration.md` |
+| D37 | 无损动作的判据是"**分歧只发生在参考自身打平处**"（δ < 0.2 nats），不是逐 token 一致 | 并发下的 greedy 分歧全部 δ ≤ 0.041 |
+| D38 | **题目契约**显式化：`max_context`（满负载下单请求长度）、`logprobs`、`model_dtypes`、`lossy/accuracy`、代码题的 `fixed` | v0 的 `-np 32` 静默把每请求上下文切到 1280；`-bs` 在并发下返回错误 logprobs |
+| D39 | 配置题参考 = **文档参数网格最优解**（逐点实测、必须过 oracle，出处写进交付物） | 公开配置覆盖不到我们的模型 × 卡；网格透明可复查 |
+| D40 | 代码题参考 = 上游 PR diff（+ 仅修编译的后续提交），存为 `reference.diff` | 评分不依赖 git 历史；PR 本身可能编译不过 |
+| D41 | 正式评分 `score`（oracle + 自适应配对）与快速测量 `measure`（无 oracle、1 对、记录为 probe、永不计分）分开 | Sherpa 内环需要便宜的测量，但必须同一契约 |
+| D42 | 有损契约以 **GSM8K-100 精度**为门禁（相对地板构建的下降 ≤ max_drop），tokens / logprobs 只报告 | 量化模型本来就不该逐 token 一致 |
+| D43 | 评判者的每个请求**显式给出全部采样参数**（`NEUTRAL_SAMPLING` + 任务参数） | 模型的 `generation_config` 被写进 GGUF，Qwen2.5 默认 repeat_penalty 1.1，"greedy"不再是 greedy |
+| D44 | **区分度门槛**：标定时得分 95% 区间 > 0.25 的题不收录；评分时区间 > 0.25 判不可信；自适应配对的停止条件按得分区间（≤ 0.15）而非比值标准误 | prefill 题 f ≈ 0.93，10 对后区间仍 ±0.7；同样的比值噪声在空间小的题上被放大 |
+| D45 | 分数**只在同一封存 bench 版本内可比**；记录保存所用参考的哈希，参考变化后旧记录在交集上重算并标记 stale；`report` 只统计当前版本 | 中途替换了一条 oracle prompt，旧记录无法重算 |
+| D46 | oracle 必须包含**比任何负载输出都长**的生成（2 条 256 token） | 截短输出的作弊补丁恰好截在 64，oracle 原有轨迹都 ≤ 64，只有测量契约抓住了它 |
+| D47 | oracle 失败的交付物只测最少的 3 对（`score_if_valid` 供诊断） | 无效交付物照常加对，单次评分耗时 57 分钟 |
 
 ### 2.2 v0 阶段的决策（标注当前状态）
 
@@ -90,13 +114,18 @@ retro-v0 中 8 个议题的处理：议题 1 → D22（换一个层级来解决�
 |---|---|---|
 | OQ-1 | 事实库的形态 | 演化为 `kernel/records`：只追加，保存原始上下文，派生量重算；用途是 bench 打分和 T1 决策回放；不进 LLM 上下文 |
 | OQ-2 | v0 用哪个框架 | llama.cpp（D29） |
-| OQ-3 | 目标机器 | 两台都用：本机 5070 Ti（WSL2）、4090 开发机（WSL2）。参考目标按机器分别测量 |
+| OQ-3 | 目标机器 | M0 只在本机（5070 Ti）完成；4090 开发机从这里访问不到，留到 M1。参考目标按机器分别测量 |
 | OQ-6 | 自修改的合入权 | D20 / D23 |
-| OQ-8 | 硬性门禁的形式 | D26 + 显著性规则 max(2×CV, 1%) |
-| OQ-9 | 有损动作的正确性 | D26 |
+| OQ-8 | 硬性门禁的形式 | 正确性 oracle（D36）+ 测量契约违规 + 配对比值标准误 ≤ 2%（D35） |
+| OQ-9 | 有损动作的正确性 | D42：GSM8K-100 精度门禁；tokens / logprobs 只报告 |
 | OQ-12 | metabench 设计 | 被 Task Bench 取代（D22） |
-| OQ-17 | WSL2 下的 profile 能力 | 两台机器都没有 nsys / ncu；CUPTI 注入可用（4090 已验证，本机需要修复 `build.sh`） |
-| OQ-18 | sm_120 支持情况 | 待 M0 机器体检时实测 llama.cpp 在 5070 Ti 上的表现 |
+| OQ-17 | WSL2 下的 profile 能力 | 两台机器都没有 nsys / ncu；CUPTI 注入可用（4090 已验证，本机需要修复 `build.sh`，M1） |
+| OQ-18 | sm_120 支持情况 | **可用**：b12242 在 5070 Ti 上 pp512 8546 / tg128 180.7（社区榜单 8420 / 182.4） |
+| OQ-19 | 压测工具 | **评判者自有客户端**（D33），`bench/reports/loadgen-selection.md` |
+| OQ-20 | 代码题产出率 | **单 PR 路线不可行**（5 个中 1 个勉强超过噪声）；改为**版本跨度 → 二分定位**，`bench/reports/code-tasks-feasibility.md` |
+| OQ-21 | 无损参考怎么取 | **HF fp32 参考 + "分歧只在打平处"**（D36、D37），`bench/reports/oracle-calibration.md` |
+| OQ-22 | M0 模型清单 | Qwen3-0.6B（训练集）、Qwen2.5-1.5B-Instruct 与 Qwen3-1.7B（留出集）；Llama / Gemma 需要授权，未用 |
+| OQ-23 | 专家配置来源 | **文档参数网格最优解**（D39）；llama.cpp 没有覆盖我们模型 × 卡的公开配置 |
 
 ### 4.2 仍然开放
 
@@ -105,23 +134,22 @@ retro-v0 中 8 个议题的处理：议题 1 → D22（换一个层级来解决�
 | OQ-4 | 每次 LLM 调用是否都开新会话 | 倾向是（D12：无状态） |
 | OQ-5 | 执行层子任务的粒度 | M1 再定 |
 | OQ-7 | 资产 overlay（base + 团队私有） | 进化单位变成 commit 之后，可能演变为"分支 / fork"，以后再讨论 |
-| OQ-10 | 负载从哪来 | 倾向：直接用压测工具自带的数据集（random 固定种子、ShareGPT 等），每道题固定一种负载 |
+| OQ-10 | 负载从哪来 | M0 用固定种子的随机 token prompt（无前缀复用）；真实分布（ShareGPT、前缀共享）留作后续题目 |
 | OQ-11 | 知识冷启动 | 推迟到 M2 之后；冷启动的效果也要由 bench 来衡量 |
 | OQ-14 | agent 执行代码的安全边界 | 未讨论 |
 | OQ-15 | CPU 和混合推理场景下的物理模型 | 推迟 |
 | OQ-16 | 决策点的模型分档 | M1 再定 |
-| **OQ-19** | **压测工具选哪个** | 候选：`vllm bench serve`、GuideLLM、genai-bench。标准：支持 llama-server 的 OpenAI 端点、streaming 下测 TTFT、固定种子可复现、高并发下客户端本身不成为瓶颈、易于固定版本。M0 第一步实测后决定 |
-| **OQ-20** | **代码题的产出率** | llama.cpp 历史上有多少性能 PR 能在 4090 / 5070 Ti + 小模型上复现出显著收益？还要考虑**老 commit 不支持新模型**的问题（例如 Qwen3 大约在 2025 年 4 月之后才被支持）。M0 的第一个可行性验证点 |
-| **OQ-21** | **无损动作的参考输出怎么取** | llama.cpp 没有 batch invariance 模式。候选：在目标并发下，用 top-1 一致率加 logprob 差异判定，容差由"同一配置重复跑的差异"标定 |
-| **OQ-22** | **M0 的模型清单** | 候选：Qwen3-0.6B / 1.7B / 4B、Llama-3.2-1B、Gemma-3-1B（都能放进 16GB）。受 OQ-20 的模型支持时间约束 |
-| **OQ-23** | **配置题的专家配置从哪来** | 候选：llama.cpp 官方文档和 README、社区教程、InferenceX 的配置（但它没覆盖 llama.cpp）。专家配置不够强时，参考目标会偏低，Sherpa 超过后上调即可 |
-| **OQ-24** | **T1 决策回放的具体形式** | M2 再定 |
+| OQ-24 | T1 决策回放的具体形式 | M2 再定 |
+| **OQ-25** | **本机测量噪声** | WSL2 + 消费卡：单对比值 CV 4–7%，段起始 GPU 时钟 1.0–2.9 GHz。自适应配对能把得分不确定度压到 ±0.1 左右，但单次评分要 5–15 分钟。是否值得换原生 Linux / 锁定 GPU 时钟（`nvidia-smi -lgc`，WSL 下不可用）？ |
+| **OQ-26** | **代码题的泄题** | 代码题来自公开历史，Sherpa 背后的 LLM 和工作区都可能"看过答案"。工作区截断到 base 只能挡住后者 |
+| **OQ-27** | **题目区分度门槛** | 现行 MAX_SCORE_NOISE = 0.25（95% 区间）。prefill 配置题因此退役；门槛定多少需要和 M2 的"显著变强"判据一起定 |
+| **OQ-28** | **契约的范围** | 现在只覆盖 `max_context`、logprobs、权重精度、有损精度。是否还需要：延迟 SLO、并发上限、流式行为、采样参数全集？每多一条都会让某些"优化"变成违规 |
 
 ## 5. 环境现状
 
 | 机器 | GPU | 系统 | 工具链 | 备注 |
 |---|---|---|---|---|
-| 本机 TOMMAO-PC4 | RTX 5070 Ti，16GB，sm_120，驱动 595.79 | WSL2（6.18） | 系统 CUDA 13.0（`/usr/local/cuda`，CUPTI 在 `extras/CUPTI`）；Python 3.12；uv；cargo 1.95；cmake / ninja 在 conda env `vllm` 里；**codebuddy 2.167.0，headless 已验证可用** | 没有 nsys / ncu；24 核，31GB 内存 |
+| 本机 TOMMAO-PC4 | RTX 5070 Ti，16GB，sm_120，驱动 595.79 | WSL2（6.18） | 系统 CUDA 13.0（`/usr/local/cuda`，CUPTI 在 `extras/CUPTI`）；Python 3.12；uv；cargo 1.95；ccache；cmake / ninja 在 conda env `vllm` 里（**该 env 的编译器变量会污染构建**，评判者已隔离）；**codebuddy 2.167.0，headless 已验证可用** | 没有 nsys / ncu；24 核，31GB 内存；**WSL2 会让超出显存的分配静默溢出到共享内存**（慢 3–8 倍，不报错）；段起始 GPU 时钟 1.0–2.9 GHz 不等 |
 | 4090 开发机 | RTX 4090，24GB，sm_89 | WSL2 | 没有系统 CUDA（使用 pip 版 `nvidia/cu13`）；没有 cargo；codebuddy 需要交互式登录 | v0 在这台机器上跑通；没有 nsys / ncu |
 
 codebuddy headless 的调用方式（本机实测）：
@@ -146,4 +174,7 @@ codebuddy -p --output-format json --tools "" '<prompt>'
 
 ## 7. 下一步
 
-执行 **M0：造尺子**，任务文档在 [`tasks/m0-judge.md`](./tasks/m0-judge.md)。第一步是两个可行性验证：压测工具选型（OQ-19）和代码题产出率（OQ-20）。
+M0 已实现并在本机标定（[`tasks/m0-judge.md`](./tasks/m0-judge.md) §5）。下一步：
+
+1. **与用户评审 M0**：D31–D47（实施决定）、OQ-25 至 OQ-28（新的待定问题）、design §3（按实测修订）
+2. 评审通过后进入 **M1**：v0 搬到新布局；Sherpa 的测量改为调用 `sherpa-judge measure`，交付改为 `sherpa-judge score`；修复可移植性问题（R9）；真实 backend 无人值守跑完 bench，得到第 0 版分数（`sherpa-judge report --sherpa-commit <v0>`）

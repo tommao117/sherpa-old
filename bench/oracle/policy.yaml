@@ -1,0 +1,33 @@
+# Correctness oracle thresholds. Calibrated on llama.cpp b12242 default builds, Qwen3-0.6B bf16,
+# RTX 5070 Ti, background load C=32 (10 runs). Evidence: bench/reports/oracle-calibration.md
+#
+#                         observed on correct builds      observed on faulty builds
+# tie delta (nats)        max 0.041                       -
+# lp_mae                  max 0.0028                      0.43   (-bs under concurrent load)
+# kl_mean                 max 0.00015                     27     (-bs under concurrent load)
+# G / null q99.9          max 0.61                        1.45-3.5 (temperature dropped)
+# out-of-nucleus pooled   max 0.002                       0.027  (top_p dropped)
+lossless:
+  tau: 0.2                       # divergence where the reference gap is below this is a tie (~5x max observed)
+  max_hard_rate: 0.0             # no confident divergence allowed (0 in 440 calibration trajectories)
+  max_lp_mae: 0.02               # ~7x max observed
+  max_kl: 0.005                  # ~30x max observed
+  g_quantile: 0.999              # per-probe Monte-Carlo null quantile of the G statistic
+  g_slack: 1.2                   # allowance for bf16-vs-fp32 reference logits
+  max_out_of_nucleus_probe: 0.04
+  max_out_of_nucleus_pooled: 0.01
+  n_samples: 500                 # per probe
+
+# Lossy contracts (quantisation...): identity and logprob error are reported but do not gate;
+# GSM8K accuracy gates (contract.accuracy.max_drop vs the floor build); the sampler check is kept
+# with a wider slack since the model's own distribution shifts.
+lossy:
+  tau: 0.2
+  max_hard_rate: 1.0
+  max_lp_mae: .inf
+  max_kl: .inf
+  g_quantile: 0.999
+  g_slack: 3.0
+  max_out_of_nucleus_probe: 0.08
+  max_out_of_nucleus_pooled: 0.03
+  n_samples: 500

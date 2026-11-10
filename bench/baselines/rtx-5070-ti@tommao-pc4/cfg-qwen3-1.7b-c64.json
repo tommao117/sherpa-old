@@ -1,0 +1,28 @@
+{
+  "task": "cfg-qwen3-1.7b-c64",
+  "task_hash": "791b11aa53cbf63e",
+  "machine": "rtx-5070-ti@tommao-pc4",
+  "record": "c20261111-012930-b1d787",
+  "floor_ratio": 0.34108909308807406,
+  "floor_ratio_cv": 0.031532164404689304,
+  "floor_ratio_se": 0.014101612617316893,
+  "pairs": 5,
+  "metric": "output_tok_per_s",
+  "floor_metric": 489.20814563795227,
+  "reference_metric": 1434.404259978096,
+  "floor_accuracy": null,
+  "oracle_records": {
+    "floor": {
+      "record": "c20261111-011747-f86ad8",
+      "oracle_pass": true,
+      "reasons": []
+    },
+    "reference": {
+      "record": "c20261111-012634-66811a",
+      "oracle_pass": true,
+      "reasons": []
+    }
+  },
+  "judge": "4172ec2426585c2d",
+  "measured_at": "2026-11-11T01:52:08+0800"
+}

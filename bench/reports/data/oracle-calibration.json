@@ -1,0 +1,984 @@
+[
+ {
+  "label": "default",
+  "rep": 0,
+  "tokens": {
+   "n": 44,
+   "match": 36,
+   "tie": 8,
+   "hard": 0,
+   "error": 0,
+   "hard_rate": 0.0,
+   "matched_frac": 0.9088541666666666,
+   "bad_items": [],
+   "pass": true
+  },
+  "logprobs": {
+   "n": 2437,
+   "mae": 0.0026132181334329605,
+   "p99": 0.02088664077758784,
+   "kl_mean": 0.0001400352225062219,
+   "checked": true,
+   "pass": true
+  },
+  "sampling": {
+   "probes": {
+    "p0": {
+     "n": 500,
+     "support": 9,
+     "out_of_nucleus": 0.0,
+     "g": 11.75,
+     "g_limit": 27.51,
+     "pass": true
+    },
+    "p1": {
+     "n": 500,
+     "support": 12,
+     "out_of_nucleus": 0.0,
+     "g": 6.93,
+     "g_limit": 32.72,
+     "pass": true
+    },
+    "p2": {
+     "n": 495,
+     "support": 31,
+     "out_of_nucleus": 0.0081,
+     "g": 26.24,
+     "g_limit": 62.13,
+     "pass": true
+    },
+    "p3": {
+     "n": 500,
+     "support": 21,
+     "out_of_nucleus": 0.0,
+     "g": 24.07,
+     "g_limit": 48.16,
+     "pass": true
+    },
+    "p4": {
+     "n": 500,
+     "support": 19,
+     "out_of_nucleus": 0.0,
+     "g": 23.62,
+     "g_limit": 43.09,
+     "pass": true
+    },
+    "p5": {
+     "n": 500,
+     "support": 17,
+     "out_of_nucleus": 0.0,
+     "g": 8.71,
+     "g_limit": 39.94,
+     "pass": true
+    }
+   },
+   "pass": true
+  },
+  "context": {
+   "required": 4096,
+   "pass": true,
+   "detail": {
+    "n_ctx": 4096,
+    "ok": true,
+    "error": null
+   }
+  },
+  "deltas": [
+   0.024,
+   0.011,
+   0.036,
+   0.01,
+   0.02,
+   0.006,
+   0.012,
+   0.0
+  ]
+ },
+ {
+  "label": "default",
+  "rep": 1,
+  "tokens": {
+   "n": 44,
+   "match": 35,
+   "tie": 9,
+   "hard": 0,
+   "error": 0,
+   "hard_rate": 0.0,
+   "matched_frac": 0.8950892857142857,
+   "bad_items": [],
+   "pass": true
+  },
+  "logprobs": {
+   "n": 2400,
+   "mae": 0.0025972402021156317,
+   "p99": 0.02061984775543202,
+   "kl_mean": 0.0001432763564684262,
+   "checked": true,
+   "pass": true
+  },
+  "sampling": {
+   "probes": {
+    "p0": {
+     "n": 500,
+     "support": 9,
+     "out_of_nucleus": 0.0,
+     "g": 8.76,
+     "g_limit": 27.51,
+     "pass": true
+    },
+    "p1": {
+     "n": 500,
+     "support": 12,
+     "out_of_nucleus": 0.0,
+     "g": 12.59,
+     "g_limit": 32.72,
+     "pass": true
+    },
+    "p2": {
+     "n": 494,
+     "support": 31,
+     "out_of_nucleus": 0.0121,
+     "g": 36.16,
+     "g_limit": 62.77,
+     "pass": true
+    },
+    "p3": {
+     "n": 500,
+     "support": 21,
+     "out_of_nucleus": 0.0,
+     "g": 18.69,
+     "g_limit": 48.16,
+     "pass": true
+    },
+    "p4": {
+     "n": 500,
+     "support": 19,
+     "out_of_nucleus": 0.0,
+     "g": 16.32,
+     "g_limit": 43.09,
+     "pass": true
+    },
+    "p5": {
+     "n": 500,
+     "support": 17,
+     "out_of_nucleus": 0.0,
+     "g": 20.29,
+     "g_limit": 39.94,
+     "pass": true
+    }
+   },
+   "pass": true
+  },
+  "context": {
+   "required": 4096,
+   "pass": true,
+   "detail": {
+    "n_ctx": 4096,
+    "ok": true,
+    "error": null
+   }
+  },
+  "deltas": [
+   0.024,
+   0.006,
+   0.011,
+   0.036,
+   0.01,
+   0.02,
+   0.006,
+   0.012,
+   0.0
+  ]
+ },
+ {
+  "label": "np32-c131k",
+  "rep": 0,
+  "tokens": {
+   "n": 44,
+   "match": 38,
+   "tie": 6,
+   "hard": 0,
+   "error": 0,
+   "hard_rate": 0.0,
+   "matched_frac": 0.9263392857142857,
+   "bad_items": [],
+   "pass": true
+  },
+  "logprobs": {
+   "n": 2484,
+   "mae": 0.0027891136098027775,
+   "p99": 0.021977407226562606,
+   "kl_mean": 0.0001431651494729033,
+   "checked": true,
+   "pass": true
+  },
+  "sampling": {
+   "probes": {
+    "p0": {
+     "n": 500,
+     "support": 9,
+     "out_of_nucleus": 0.0,
+     "g": 12.55,
+     "g_limit": 27.51,
+     "pass": true
+    },
+    "p1": {
+     "n": 500,
+     "support": 12,
+     "out_of_nucleus": 0.0,
+     "g": 6.24,
+     "g_limit": 32.72,
+     "pass": true
+    },
+    "p2": {
+     "n": 500,
+     "support": 31,
+     "out_of_nucleus": 0.004,
+     "g": 31.39,
+     "g_limit": 70.03,
+     "pass": true
+    },
+    "p3": {
+     "n": 500,
+     "support": 21,
+     "out_of_nucleus": 0.0,
+     "g": 25.33,
+     "g_limit": 48.16,
+     "pass": true
+    },
+    "p4": {
+     "n": 500,
+     "support": 19,
+     "out_of_nucleus": 0.0,
+     "g": 9.27,
+     "g_limit": 43.09,
+     "pass": true
+    },
+    "p5": {
+     "n": 500,
+     "support": 17,
+     "out_of_nucleus": 0.0,
+     "g": 9.85,
+     "g_limit": 39.94,
+     "pass": true
+    }
+   },
+   "pass": true
+  },
+  "context": {
+   "required": 4096,
+   "pass": true,
+   "detail": {
+    "n_ctx": 4096,
+    "ok": true,
+    "error": null
+   }
+  },
+  "deltas": [
+   0.012,
+   0.011,
+   0.02,
+   0.017,
+   0.041,
+   0.006
+  ]
+ },
+ {
+  "label": "np32-c131k",
+  "rep": 1,
+  "tokens": {
+   "n": 44,
+   "match": 40,
+   "tie": 4,
+   "hard": 0,
+   "error": 0,
+   "hard_rate": 0.0,
+   "matched_frac": 0.9352678571428571,
+   "bad_items": [],
+   "pass": true
+  },
+  "logprobs": {
+   "n": 2508,
+   "mae": 0.002782775491571637,
+   "p99": 0.021027603683471785,
+   "kl_mean": 0.00013735044009074217,
+   "checked": true,
+   "pass": true
+  },
+  "sampling": {
+   "probes": {
+    "p0": {
+     "n": 500,
+     "support": 9,
+     "out_of_nucleus": 0.0,
+     "g": 8.86,
+     "g_limit": 27.51,
+     "pass": true
+    },
+    "p1": {
+     "n": 500,
+     "support": 12,
+     "out_of_nucleus": 0.0,
+     "g": 15.06,
+     "g_limit": 32.72,
+     "pass": true
+    },
+    "p2": {
+     "n": 500,
+     "support": 31,
+     "out_of_nucleus": 0.008,
+     "g": 21.12,
+     "g_limit": 65.84,
+     "pass": true
+    },
+    "p3": {
+     "n": 500,
+     "support": 21,
+     "out_of_nucleus": 0.0,
+     "g": 17.41,
+     "g_limit": 48.16,
+     "pass": true
+    },
+    "p4": {
+     "n": 500,
+     "support": 19,
+     "out_of_nucleus": 0.0,
+     "g": 21.36,
+     "g_limit": 43.09,
+     "pass": true
+    },
+    "p5": {
+     "n": 500,
+     "support": 17,
+     "out_of_nucleus": 0.0,
+     "g": 21.32,
+     "g_limit": 39.94,
+     "pass": true
+    }
+   },
+   "pass": true
+  },
+  "context": {
+   "required": 4096,
+   "pass": true,
+   "detail": {
+    "n_ctx": 4096,
+    "ok": true,
+    "error": null
+   }
+  },
+  "deltas": [
+   0.024,
+   0.036,
+   0.003,
+   0.006
+  ]
+ },
+ {
+  "label": "np32-c131k-bs",
+  "rep": 0,
+  "tokens": {
+   "n": 44,
+   "match": 36,
+   "tie": 8,
+   "hard": 0,
+   "error": 0,
+   "hard_rate": 0.0,
+   "matched_frac": 0.8976934523809523,
+   "bad_items": [],
+   "pass": true
+  },
+  "logprobs": {
+   "n": 2407,
+   "mae": 0.42736245949314505,
+   "p99": 2.3931,
+   "kl_mean": 27.051129684184843,
+   "checked": true,
+   "pass": true
+  },
+  "sampling": {
+   "probes": {
+    "p0": {
+     "n": 500,
+     "support": 9,
+     "out_of_nucleus": 0.0,
+     "g": 9.63,
+     "g_limit": 27.51,
+     "pass": true
+    },
+    "p1": {
+     "n": 500,
+     "support": 12,
+     "out_of_nucleus": 0.0,
+     "g": 7.32,
+     "g_limit": 32.72,
+     "pass": true
+    },
+    "p2": {
+     "n": 500,
+     "support": 31,
+     "out_of_nucleus": 0.002,
+     "g": 25.05,
+     "g_limit": 62.73,
+     "pass": true
+    },
+    "p3": {
+     "n": 500,
+     "support": 21,
+     "out_of_nucleus": 0.0,
+     "g": 24.22,
+     "g_limit": 48.16,
+     "pass": true
+    },
+    "p4": {
+     "n": 500,
+     "support": 19,
+     "out_of_nucleus": 0.0,
+     "g": 6.9,
+     "g_limit": 43.09,
+     "pass": true
+    },
+    "p5": {
+     "n": 500,
+     "support": 17,
+     "out_of_nucleus": 0.0,
+     "g": 8.17,
+     "g_limit": 39.94,
+     "pass": true
+    }
+   },
+   "pass": true
+  },
+  "context": {
+   "required": 4096,
+   "pass": true,
+   "detail": {
+    "n_ctx": 4096,
+    "ok": true,
+    "error": null
+   }
+  },
+  "deltas": [
+   0.012,
+   0.009,
+   0.011,
+   0.041,
+   0.01,
+   0.017,
+   0.041,
+   0.0
+  ]
+ },
+ {
+  "label": "np32-c131k-bs",
+  "rep": 1,
+  "tokens": {
+   "n": 44,
+   "match": 40,
+   "tie": 4,
+   "hard": 0,
+   "error": 0,
+   "hard_rate": 0.0,
+   "matched_frac": 0.9393601190476191,
+   "bad_items": [],
+   "pass": true
+  },
+  "logprobs": {
+   "n": 2519,
+   "mae": 0.4310150932909885,
+   "p99": 2.38708,
+   "kl_mean": 27.039415223652014,
+   "checked": true,
+   "pass": true
+  },
+  "sampling": {
+   "probes": {
+    "p0": {
+     "n": 500,
+     "support": 9,
+     "out_of_nucleus": 0.0,
+     "g": 10.26,
+     "g_limit": 27.51,
+     "pass": true
+    },
+    "p1": {
+     "n": 500,
+     "support": 12,
+     "out_of_nucleus": 0.0,
+     "g": 12.43,
+     "g_limit": 32.72,
+     "pass": true
+    },
+    "p2": {
+     "n": 500,
+     "support": 31,
+     "out_of_nucleus": 0.006,
+     "g": 37.91,
+     "g_limit": 62.94,
+     "pass": true
+    },
+    "p3": {
+     "n": 500,
+     "support": 21,
+     "out_of_nucleus": 0.0,
+     "g": 19.8,
+     "g_limit": 48.16,
+     "pass": true
+    },
+    "p4": {
+     "n": 500,
+     "support": 19,
+     "out_of_nucleus": 0.0,
+     "g": 19.07,
+     "g_limit": 43.09,
+     "pass": true
+    },
+    "p5": {
+     "n": 500,
+     "support": 17,
+     "out_of_nucleus": 0.0,
+     "g": 21.11,
+     "g_limit": 39.94,
+     "pass": true
+    }
+   },
+   "pass": true
+  },
+  "context": {
+   "required": 4096,
+   "pass": true,
+   "detail": {
+    "n_ctx": 4096,
+    "ok": true,
+    "error": null
+   }
+  },
+  "deltas": [
+   0.024,
+   0.009,
+   0.003,
+   0.0
+  ]
+ },
+ {
+  "label": "FAULT-no-top_p",
+  "rep": 0,
+  "tokens": {
+   "n": 44,
+   "match": 38,
+   "tie": 6,
+   "hard": 0,
+   "error": 0,
+   "hard_rate": 0.0,
+   "matched_frac": 0.9215029761904762,
+   "bad_items": [],
+   "pass": true
+  },
+  "logprobs": {
+   "n": 2471,
+   "mae": 0.002628010303551505,
+   "p99": 0.020426824035644664,
+   "kl_mean": 0.000134260397288014,
+   "checked": true,
+   "pass": true
+  },
+  "sampling": {
+   "probes": {
+    "p0": {
+     "n": 500,
+     "support": 9,
+     "out_of_nucleus": 0.022,
+     "g": 5.0,
+     "g_limit": 26.39,
+     "pass": true
+    },
+    "p1": {
+     "n": 500,
+     "support": 12,
+     "out_of_nucleus": 0.022,
+     "g": 10.88,
+     "g_limit": 32.64,
+     "pass": true
+    },
+    "p2": {
+     "n": 496,
+     "support": 31,
+     "out_of_nucleus": 0.0504,
+     "g": 29.5,
+     "g_limit": 63.36,
+     "pass": true
+    },
+    "p3": {
+     "n": 500,
+     "support": 21,
+     "out_of_nucleus": 0.022,
+     "g": 27.17,
+     "g_limit": 47.39,
+     "pass": true
+    },
+    "p4": {
+     "n": 499,
+     "support": 19,
+     "out_of_nucleus": 0.022,
+     "g": 24.93,
+     "g_limit": 48.76,
+     "pass": true
+    },
+    "p5": {
+     "n": 500,
+     "support": 17,
+     "out_of_nucleus": 0.022,
+     "g": 15.06,
+     "g_limit": 38.33,
+     "pass": true
+    }
+   },
+   "pass": true
+  },
+  "context": {
+   "required": 4096,
+   "pass": true,
+   "detail": {
+    "n_ctx": 4096,
+    "ok": true,
+    "error": null
+   }
+  },
+  "deltas": [
+   0.012,
+   0.009,
+   0.019,
+   0.01,
+   0.017,
+   0.041
+  ]
+ },
+ {
+  "label": "FAULT-no-temp",
+  "rep": 0,
+  "tokens": {
+   "n": 44,
+   "match": 39,
+   "tie": 5,
+   "hard": 0,
+   "error": 0,
+   "hard_rate": 0.0,
+   "matched_frac": 0.9084821428571429,
+   "bad_items": [],
+   "pass": true
+  },
+  "logprobs": {
+   "n": 2436,
+   "mae": 0.0026768946748284028,
+   "p99": 0.020836004695892307,
+   "kl_mean": 0.0001285162216754722,
+   "checked": true,
+   "pass": true
+  },
+  "sampling": {
+   "probes": {
+    "p0": {
+     "n": 500,
+     "support": 9,
+     "out_of_nucleus": 0.0,
+     "g": 71.05,
+     "g_limit": 27.51,
+     "pass": false
+    },
+    "p1": {
+     "n": 500,
+     "support": 12,
+     "out_of_nucleus": 0.0,
+     "g": 89.37,
+     "g_limit": 32.72,
+     "pass": false
+    },
+    "p2": {
+     "n": 498,
+     "support": 31,
+     "out_of_nucleus": 0.002,
+     "g": 91.43,
+     "g_limit": 62.94,
+     "pass": false
+    },
+    "p3": {
+     "n": 500,
+     "support": 21,
+     "out_of_nucleus": 0.0,
+     "g": 168.71,
+     "g_limit": 48.16,
+     "pass": false
+    },
+    "p4": {
+     "n": 500,
+     "support": 19,
+     "out_of_nucleus": 0.0,
+     "g": 104.65,
+     "g_limit": 43.09,
+     "pass": false
+    },
+    "p5": {
+     "n": 500,
+     "support": 17,
+     "out_of_nucleus": 0.0,
+     "g": 94.4,
+     "g_limit": 39.94,
+     "pass": false
+    }
+   },
+   "pass": false
+  },
+  "context": {
+   "required": 4096,
+   "pass": true,
+   "detail": {
+    "n_ctx": 4096,
+    "ok": true,
+    "error": null
+   }
+  },
+  "deltas": [
+   0.012,
+   0.009,
+   0.019,
+   0.031,
+   0.017
+  ]
+ },
+ {
+  "label": "np32-c32k",
+  "rep": 0,
+  "tokens": {
+   "n": 44,
+   "match": 34,
+   "tie": 7,
+   "hard": 0,
+   "error": 3,
+   "hard_rate": 0.0,
+   "matched_frac": 0.8846726190476191,
+   "bad_items": [
+    {
+     "id": "long-build-doc",
+     "verdict": "error",
+     "match_len": 0,
+     "delta": null,
+     "cand_tok": null,
+     "error": "no tokens: {'code': 400, 'message': 'request (1648 tokens) exceeds the available context size (1024 tokens), try increasing it', 'type': 'exceed_context_size_error', 'n_prompt_tokens': 1648, 'n_ctx': 1024}"
+    },
+    {
+     "id": "long-readme",
+     "verdict": "error",
+     "match_len": 0,
+     "delta": null,
+     "cand_tok": null,
+     "error": "no tokens: {'code': 400, 'message': 'request (2616 tokens) exceeds the available context size (1024 tokens), try increasing it', 'type': 'exceed_context_size_error', 'n_prompt_tokens': 2616, 'n_ctx': 1024}"
+    },
+    {
+     "id": "long-server-readme",
+     "verdict": "error",
+     "match_len": 0,
+     "delta": null,
+     "cand_tok": null,
+     "error": "no tokens: {'code': 400, 'message': 'request (3627 tokens) exceeds the available context size (1024 tokens), try increasing it', 'type': 'exceed_context_size_error', 'n_prompt_tokens': 3627, 'n_ctx': 1024}"
+    }
+   ],
+   "pass": false
+  },
+  "logprobs": {
+   "n": 2372,
+   "mae": 0.0027212090883646134,
+   "p99": 0.02140908843994138,
+   "kl_mean": 0.00012474071303373004,
+   "checked": true,
+   "pass": true
+  },
+  "sampling": {
+   "probes": {
+    "p0": {
+     "n": 500,
+     "support": 9,
+     "out_of_nucleus": 0.0,
+     "g": 11.75,
+     "g_limit": 27.51,
+     "pass": true
+    },
+    "p1": {
+     "n": 500,
+     "support": 12,
+     "out_of_nucleus": 0.0,
+     "g": 8.92,
+     "g_limit": 32.72,
+     "pass": true
+    },
+    "p2": {
+     "n": 499,
+     "support": 31,
+     "out_of_nucleus": 0.0,
+     "g": 28.91,
+     "g_limit": 62.73,
+     "pass": true
+    },
+    "p3": {
+     "n": 500,
+     "support": 21,
+     "out_of_nucleus": 0.0,
+     "g": 24.11,
+     "g_limit": 48.16,
+     "pass": true
+    },
+    "p4": {
+     "n": 500,
+     "support": 19,
+     "out_of_nucleus": 0.0,
+     "g": 21.38,
+     "g_limit": 43.09,
+     "pass": true
+    },
+    "p5": {
+     "n": 500,
+     "support": 17,
+     "out_of_nucleus": 0.0,
+     "g": 12.4,
+     "g_limit": 39.94,
+     "pass": true
+    }
+   },
+   "pass": true
+  },
+  "context": {
+   "required": 4096,
+   "pass": false,
+   "detail": {
+    "n_ctx": 4096,
+    "ok": false,
+    "error": "{'code': 400, 'message': 'request (4088 tokens) exceeds the available context size (1024 tokens), try increasing it', 'type': 'exceed_context_size_error', 'n_prompt_tokens': 4088, 'n_ctx': 1024}"
+   }
+  },
+  "deltas": [
+   0.024,
+   0.009,
+   0.011,
+   0.01,
+   0.011,
+   0.006,
+   0.0
+  ]
+ },
+ {
+  "label": "np32-c32k",
+  "rep": 1,
+  "tokens": {
+   "n": 44,
+   "match": 36,
+   "tie": 5,
+   "hard": 0,
+   "error": 3,
+   "hard_rate": 0.0,
+   "matched_frac": 0.9036458333333334,
+   "bad_items": [
+    {
+     "id": "long-build-doc",
+     "verdict": "error",
+     "match_len": 0,
+     "delta": null,
+     "cand_tok": null,
+     "error": "no tokens: {'code': 400, 'message': 'request (1648 tokens) exceeds the available context size (1024 tokens), try increasing it', 'type': 'exceed_context_size_error', 'n_prompt_tokens': 1648, 'n_ctx': 1024}"
+    },
+    {
+     "id": "long-readme",
+     "verdict": "error",
+     "match_len": 0,
+     "delta": null,
+     "cand_tok": null,
+     "error": "no tokens: {'code': 400, 'message': 'request (2616 tokens) exceeds the available context size (1024 tokens), try increasing it', 'type': 'exceed_context_size_error', 'n_prompt_tokens': 2616, 'n_ctx': 1024}"
+    },
+    {
+     "id": "long-server-readme",
+     "verdict": "error",
+     "match_len": 0,
+     "delta": null,
+     "cand_tok": null,
+     "error": "no tokens: {'code': 400, 'message': 'request (3627 tokens) exceeds the available context size (1024 tokens), try increasing it', 'type': 'exceed_context_size_error', 'n_prompt_tokens': 3627, 'n_ctx': 1024}"
+    }
+   ],
+   "pass": false
+  },
+  "logprobs": {
+   "n": 2423,
+   "mae": 0.00264164986295699,
+   "p99": 0.019389489898681722,
+   "kl_mean": 0.0001409453613327029,
+   "checked": true,
+   "pass": true
+  },
+  "sampling": {
+   "probes": {
+    "p0": {
+     "n": 500,
+     "support": 9,
+     "out_of_nucleus": 0.0,
+     "g": 8.76,
+     "g_limit": 27.51,
+     "pass": true
+    },
+    "p1": {
+     "n": 500,
+     "support": 12,
+     "out_of_nucleus": 0.0,
+     "g": 13.14,
+     "g_limit": 32.72,
+     "pass": true
+    },
+    "p2": {
+     "n": 499,
+     "support": 31,
+     "out_of_nucleus": 0.004,
+     "g": 32.08,
+     "g_limit": 62.94,
+     "pass": true
+    },
+    "p3": {
+     "n": 500,
+     "support": 21,
+     "out_of_nucleus": 0.0,
+     "g": 20.78,
+     "g_limit": 48.16,
+     "pass": true
+    },
+    "p4": {
+     "n": 500,
+     "support": 19,
+     "out_of_nucleus": 0.0,
+     "g": 20.66,
+     "g_limit": 43.09,
+     "pass": true
+    },
+    "p5": {
+     "n": 500,
+     "support": 17,
+     "out_of_nucleus": 0.0,
+     "g": 14.98,
+     "g_limit": 39.94,
+     "pass": true
+    }
+   },
+   "pass": true
+  },
+  "context": {
+   "required": 4096,
+   "pass": false,
+   "detail": {
+    "n_ctx": 4096,
+    "ok": false,
+    "error": "{'code': 400, 'message': 'request (4088 tokens) exceeds the available context size (1024 tokens), try increasing it', 'type': 'exceed_context_size_error', 'n_prompt_tokens': 4088, 'n_ctx': 1024}"
+   }
+  },
+  "deltas": [
+   0.012,
+   0.02,
+   0.014,
+   0.019,
+   0.012
+  ]
+ }
+]

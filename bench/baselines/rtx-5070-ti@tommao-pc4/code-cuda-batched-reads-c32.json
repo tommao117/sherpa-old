@@ -1,0 +1,28 @@
+{
+  "task": "code-cuda-batched-reads-c32",
+  "task_hash": "d7ddc67f82b76bdc",
+  "machine": "rtx-5070-ti@tommao-pc4",
+  "record": "c20261111-005024-df7623",
+  "floor_ratio": 0.5057443584837467,
+  "floor_ratio_cv": 0.0451599716103617,
+  "floor_ratio_se": 0.01843648120732675,
+  "pairs": 6,
+  "metric": "output_tok_per_s",
+  "floor_metric": 585.7039106947558,
+  "reference_metric": 1158.641192944569,
+  "floor_accuracy": null,
+  "oracle_records": {
+    "floor": {
+      "record": "c20261111-004136-7fb7fa",
+      "oracle_pass": true,
+      "reasons": []
+    },
+    "reference": {
+      "record": "c20261111-004259-f055a6",
+      "oracle_pass": true,
+      "reasons": []
+    }
+  },
+  "judge": "4172ec2426585c2d",
+  "measured_at": "2026-11-11T01:12:12+0800"
+}

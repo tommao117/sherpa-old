@@ -1,0 +1,44 @@
+framework: llama.cpp
+base: b12242
+model_dtype: bf16
+args:
+- -np
+- '16'
+- -c
+- '65536'
+- -fit
+- 'off'
+- -fa
+- 'on'
+- -ub
+- '2048'
+- -b
+- '2048'
+env: {}
+source: 'best of documented-knob grid (tools/server/README.md @ b12242: -np, -kvu/-c,
+  -fit, -fa, -ub/-b), measured on rtx-5070-ti@tommao-pc4'
+grid:
+- args: -np 16 -kvu -c 16384 -fit off -fa on -ub 512 -b 2048
+  output_tok_per_s: 935.43
+- args: -np 16 -kvu -c 16384 -fit off -fa on -ub 1024 -b 2048
+  output_tok_per_s: 948.57
+- args: -np 16 -kvu -c 16384 -fit off -fa on -ub 2048 -b 2048
+  output_tok_per_s: 926.75
+- args: -np 16 -c 65536 -fit off -fa on -ub 512 -b 2048
+  output_tok_per_s: 961.9507228658325
+- args: -np 16 -c 65536 -fit off -fa on -ub 1024 -b 2048
+  output_tok_per_s: 987.576038247575
+- args: -np 16 -c 65536 -fit off -fa on -ub 2048 -b 2048
+  output_tok_per_s: 1005.1690981528048
+- args: -np 8 -c 32768 -fit off -fa on -ub 512 -b 2048
+  output_tok_per_s: 798.68
+- args: -np 8 -c 32768 -fit off -fa on -ub 1024 -b 2048
+  output_tok_per_s: 769.32
+- args: -np 8 -c 32768 -fit off -fa on -ub 2048 -b 2048
+  output_tok_per_s: 771.95
+- args: -np 4 -c 16384 -fit off -fa on -ub 512 -b 2048
+  output_tok_per_s: 533.28
+- args: -np 4 -c 16384 -fit off -fa on -ub 1024 -b 2048
+  output_tok_per_s: 542.93
+- args: -np 4 -c 16384 -fit off -fa on -ub 2048 -b 2048
+  output_tok_per_s: 541.78
