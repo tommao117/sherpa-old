@@ -1,0 +1,29 @@
+id: offload-sampling-to-gpu
+node: step.gpu_idle
+kind: close_gap
+when:
+  gpu_idle_ratio: ">0.3"
+  decode_batch: ">=8"
+effect:
+  metric: output_tok_per_s
+  recover_gap: [0.3, 0.4]
+  side_effects:
+    op.other: "+0.06 ~ +0.08 ms/token at vocab~150k"
+    op.memcpy: "-50%"
+apply:
+  llama.cpp:
+    knobs:
+      backend_sampling: true
+evidence: [t20261110-110453/f002]
+counter: []
+notes: |
+  这是成本搬运，不是成本消除。CPU 逐 token 对整个 vocab 做 top-k/top-p 会让 GPU 空等，把采样放到
+  GPU 上能消除这部分空闲（f002: step.gpu_idle 0.350 -> 0.224 ms/tok）并减少 logits 回拷
+  （op.memcpy 0.073 -> 0.034），但 GPU 上新增采样 kernel（op.other 0.025 -> 0.091）。
+  净收益约为'被搬走的 idle'的一半，所以预测时必须减去新增成本（f002 只算收益，预测 +40% 实测 +23.5%）。
+  已知副作用（f003，尚未量化）：llama.cpp 在每个请求开始/结束调用 llama_set_sampler，会置
+  sched_need_reserve 触发 backend scheduler 重建、CUDA graph 缓存失效；trace 中 >=5ms 的大停顿数
+  与请求数吻合，占窗口约 18%。因此在'请求数多、单请求输出短'的负载下，这条动作的收益会被侵蚀，
+  需要新的事实来确定条件变量（候选：output_tokens 越小收益越低）。
+  限制：与 grammar / reasoning budget / n_probs>0 不兼容（框架会静默回退到 CPU 采样）。
+  精度风险：改变采样实现路径，而 greedy 正确性门禁（top_k=1）走不到这条路径，无法验证采样语义等价。

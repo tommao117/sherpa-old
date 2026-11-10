@@ -1,0 +1,17 @@
+id: llama-cpp-irreducible
+framework: llama.cpp
+source: [t20261110-110453/f003]
+items:
+  - node: request.outside_gpu_window
+    magnitude: "约占总时间 5~7%"
+    cause: HTTP + JSON 序列化、任务队列、非 streaming 下的响应组装
+    reducible: 低
+  - node: op.other
+    magnitude: "开启 backend sampling 后约 0.09 ms/token（vocab 15 万）"
+    cause: GPU 采样 kernel（top_k_radix_select 等）
+    reducible: 低（除非减小 vocab 或改采样算法）
+  - node: step.gpu_idle
+    magnitude: "开启 backend sampling 后仍有约 0.22 ms/token"
+    cause: 疑为每请求触发 llama_set_sampler -> sched_need_reserve -> scheduler 重建 + CUDA graph 失效
+    reducible: 高（未验证）
+    next: sampler 链图结构未变时跳过 sched_reserve

@@ -1,0 +1,35 @@
+{
+  "type": "object",
+  "required": ["experiments", "reason"],
+  "properties": {
+    "reason": {"type": "string"},
+    "experiments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["hypothesis", "node", "kind", "action", "predicted"],
+        "properties": {
+          "hypothesis": {"type": "string"},
+          "node": {"type": "string"},
+          "kind": {"enum": ["close_gap", "move_bound"]},
+          "action": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {"enum": ["config", "code"]},
+              "knobs": {"type": "object"},
+              "instructions": {"type": "string"},
+              "id": {"type": "string"}
+            }
+          },
+          "predicted": {
+            "type": "object",
+            "required": ["delta_pct", "rationale"],
+            "properties": {"delta_pct": {"type": "number"}, "rationale": {"type": "string"}}
+          },
+          "knowledge_used": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

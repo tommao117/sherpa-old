@@ -1,0 +1,16 @@
+id: rtx-4090-efficiency
+hw: rtx-4090
+source: [t20261110-110453/f001, t20261110-110453/f002]
+priors:
+  op.gemm:
+    decode_small_batch:
+      efficiency: [0.55, 0.70]
+      note: |
+        B<=32 的 decode GEMM（llama.cpp 走 mul_mat_f / cutlass / cublas）实测能达到理论下界的
+        55~70%。B=4 时 0.67，B=32 时 0.58。低于此范围才值得优化 kernel。
+  op.attention:
+    flash_attn_decode:
+      efficiency: [0.35, 0.40]
+      note: |
+        实测约为理论值的 0.38。理论值只算 KV 读取字节，未计 Q 加载、mask 处理、stream-k fixup，
+        因此物理模型偏乐观约 2 倍。这是模型的已知偏差，不是优化空间。

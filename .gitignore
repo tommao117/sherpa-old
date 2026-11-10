@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Runtime data (lives in ../sherpa-data by default; ignored here in case SHERPA_DATA points inside the repo)
+sherpa-data/
+/data/
+
+# Native build output
+crates/**/build/
+*.so
+*.o
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store

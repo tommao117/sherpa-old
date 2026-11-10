@@ -1,0 +1,16 @@
+name: llama.cpp
+repo: https://github.com/ggml-org/llama.cpp
+default_ref: b12242
+model_format: gguf
+api: llama-server            # 原生 /completion + /props
+build:
+  system: cmake
+  targets: [llama-server, llama-bench, llama-quantize]
+  cmake_args:
+    - -DGGML_CUDA=ON
+    - -DCMAKE_BUILD_TYPE=Release
+    - -DLLAMA_CURL=OFF
+  # 由 env 探测结果填充：CUDAToolkit_ROOT / CMAKE_CUDA_COMPILER / CMAKE_CUDA_ARCHITECTURES / rpath
+requires:
+  capabilities: [cuda_build]
+  optional: [kernel_trace]

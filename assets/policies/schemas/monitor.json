@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["action", "reason"],
+  "properties": {
+    "action": {"enum": ["continue", "kill"]},
+    "reason": {"type": "string"}
+  }
+}

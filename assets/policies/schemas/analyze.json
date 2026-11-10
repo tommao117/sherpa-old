@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "required": ["prediction_error_cause", "conclusion"],
+  "properties": {
+    "prediction_error_cause": {"enum": ["accurate", "missing_variable", "physics_inaccurate", "measurement_issue", "implementation_issue", "unknown"]},
+    "explanation": {"type": "string"},
+    "ledger_changes": {"type": "string"},
+    "conclusion": {"type": "string"},
+    "conditions": {"type": "object", "description": "feature conditions under which the conclusion holds"},
+    "sherpa_issues": {"type": "array", "items": {"type": "string"}}
+  }
+}

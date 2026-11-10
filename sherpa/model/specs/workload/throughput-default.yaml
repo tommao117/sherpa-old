@@ -1,0 +1,12 @@
+id: throughput-default
+goal: throughput            # 优化目标：输出 token 吞吐
+primary_metric: output_tok_per_s
+higher_is_better: true
+synthetic:
+  prompt_tokens: 256        # 每个请求的输入长度（随机 token，固定种子）
+  output_tokens: 128        # 每个请求的输出长度（ignore_eos）
+  seed: 1234
+concurrency: 32             # 客户端并发
+num_requests: 128           # 每轮测量的请求数
+warmup_requests: 16
+repeats: 3
