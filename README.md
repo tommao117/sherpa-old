@@ -1,54 +1,48 @@
 # Sherpa
 
-自迭代推理优化框架。它不做推理，而是在给定的 模型 × 卡型 × 推理框架 上完成部署、bench、profile、优化、交付，并在每次使用后让自己变得更强。
+自迭代推理优化框架。它不做推理，而是在给定的 模型 × 卡型 × 推理框架 上完成部署、bench、profile、优化和交付，并在每次使用后让自己变得更强。
 
-当前阶段：**v0 全链路已跑通，等待复盘。**
+**核心命题**：Sherpa 的"自身"（代码 + 资产）由 agent 不断改写；一次改写只有在固定的任务基准（Task Bench）上证明变强了，才会被保留。
 
-首次走查结果（Qwen3-0.6B × RTX 4090 × llama.cpp@b12242，吞吐负载）：
+## 当前阶段
 
-| | |
-|---|---|
-| 内环 | 877 → **1900 tok/s（+116.6%）**，2 个动作被接受，门禁全过，已交付 |
-| 外环 | 产出 4 条知识（自动合入）+ 2 条资产变更（人审合入） |
-| 进化闭环 | 同一 baseline 特征，进化前无建议，进化后可直接给出 `-np 32`（+75%） |
-
-| 文档 | 内容 |
-|---|---|
-| [`docs/design.md`](docs/design.md) | 顶层设计：第一性原理、两层循环、机理模型、知识体系、agent loop、目录结构、v0 范围 |
-| [`docs/decisions.md`](docs/decisions.md) | 用户强调的要点、已确认的决策、默认方案、待定问题、环境现状 |
-| [`docs/devlog.md`](docs/devlog.md) | **走查中记录的 35 条问题**（环境 4 / 设计 22 / 实现 9），含现象、临时处理、对设计的启示 |
-| [`docs/retro-v0.md`](docs/retro-v0.md) | **复盘入口**：把 35 条问题收敛成 8 个待决策议题，并列出 design 需修订处 |
-
-## 接手须知
-
-**要复盘设计**：读 `retro-v0.md`，它指明了阅读顺序和讨论顺序。
-
-**要继续开发**：
-
-```bash
-python3 -m sherpa.cli.main env       # 探测机器（GPU / CUDA / profile 能力），写入 sherpa-data/env.yaml
-python3 -m sherpa.cli.main pending   # 列出等待回答的决策请求
+```
+v0 跑通 ──► 独立评审 ──► 设计 v1 ──► M0 造尺子 ◄── 现在 ──► M1 诚实的第 0 版 ──► M2 自进化 ──► M3 扩展
 ```
 
-完整命令与现场数据位置见 `retro-v0.md` §6。
+- v0：在 llama.cpp × Qwen3-0.6B × RTX 4090 上跑通全链路（877 → 1900 tok/s）。但评审结论是：它证明了管线能走通，还没有证明"Sherpa 有效"或"Sherpa 在变强"
+- 当前任务：[`docs/tasks/m0-judge.md`](docs/tasks/m0-judge.md)，为 llama.cpp 建立评判者 kernel 和 Task Bench
+- 现阶段只用 llama.cpp 打磨 Sherpa
+
+## 文档
+
+| 文档 | 内容 | 状态 |
+|---|---|---|
+| [`docs/design.md`](docs/design.md) | 顶层设计 v1：核心命题、评判者 / 被评判者、Task Bench、正确性 oracle、进化、里程碑、开源 bench 调研 | **现行** |
+| [`docs/decisions.md`](docs/decisions.md) | 用户强调的要点、决策（含状态）、v0 评审结论、待定问题、环境现状、下一步 | **现行** |
+| [`docs/devlog.md`](docs/devlog.md) | v0 走查中记录的 35 条问题 | 历史 |
+| [`docs/retro-v0.md`](docs/retro-v0.md) | v0 复盘的 8 个议题（处理结果见 `decisions.md` §3） | 历史 |
+
+| [`docs/tasks/m0-judge.md`](docs/tasks/m0-judge.md) | 当前任务 M0：背景、任务定义、验收、执行计划、执行记录 | **进行中** |
+
+**接手的 agent**：先读 `design.md` 和 `decisions.md`，再按 `docs/tasks/m0-judge.md` 执行。
 
 ## 布局
 
-```
-sherpa/        Python 包（只能人改）
-  kernel/        锚点：facts / measure / gates / invariants / knowledge 解释器 / metabench / evolve
-  model/         机理模型：specs / physics / ledger / features / constraints
-  runtime/       机制层：engine / scheduler / events / watchers / backends / workspace / env / task
-  cli/
-assets/        可进化资产（Sherpa 自己会改，走 evolve 提案）
-  adapters/<fw>/   框架适配器（含 adapter.py，动态加载而非 import）
-  knowledge/       actions/ 动作目录、priors/ 效率先验
-  policies/        决策点 policy + hooks.yaml + 输出 schema
-  playbooks/       执行层：某类子任务怎么做
-crates/        原生代码（cupti-trace：CUPTI 注入式 kernel tracer，替代缺失的 nsys）
-docs/
+v1 的目标布局见 `design.md` §7。M0 新建 `kernel/` 和 `bench/`；下面的 v0 代码会在 M1 搬迁。
 
-../sherpa-data/   运行时数据（不进代码仓）：env.yaml / repos / models / tools / tasks / facts / artifacts / proposals
+```
+sherpa/        v0 Python 包：kernel / model / runtime / cli
+assets/        v0 资产：adapters / knowledge / policies / playbooks
+crates/        原生代码（cupti-trace：CUPTI 注入式 kernel tracer）
+docs/          设计、决策、任务文档（docs/tasks/）
+
+../sherpa-data/   运行时数据（不进仓库）
 ```
 
-为什么 Python 包多套一层、为什么 `adapter.py` 不走 import：见 `devlog.md` DES-17。
+v0 的常用命令（M1 之前仍可使用）：
+
+```bash
+python3 -m sherpa.cli.main env       # 探测机器，写入 sherpa-data/env.yaml
+python3 -m sherpa.cli.main pending   # 列出等待回答的 handoff 决策请求
+```
