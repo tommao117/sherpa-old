@@ -131,6 +131,16 @@ flowchart LR
 
 源码依据：`tools/CMakeLists.txt`、`tools/completion/CMakeLists.txt`、`common/arg.cpp`、`src/llama.cpp`、`src/llama-model.cpp`、`src/llama-context.cpp`。日志证据需与真实 Call、正常退出及设备映射关联后才能用于冒烟判定。
 
+### 准备与构建记录核验
+
+`check_completion_records(data_root, task, locations, build_call=None)` 只读核对记录来源。它重新生成命令计划，将 Run、真实 `framework.prepare` 和契约绑定；提供 build Call 时，继续检查 configure/build 的输入输出哈希、实际命令、正常退出、清理和验证结果，再有界读取二进制核对内容身份。
+
+构建记录采用 `completion.configure/build`、`completion-executor-v1`：输入包含 `task_hash/plan_hash/command`，build 另绑定 `configure_call/configure_output_hash`；输出包含 `process/verification`，build 另带 `artifact.path/bytes/sha256`。该记录协议供后续真实执行器写入，不能用 fixture Call 替代。
+
+prepare/configure/build 必须属于当前 Run；旧检查点应先导入新 Run，不跨运行直接借用二进制。读取逐级拒绝符号链接，单份 JSON 上限 4 MiB、二进制 64 MiB，总读取预算 128 MiB，并支持取消。核验不修改历史记录。
+
+`records_verified` 仅表示本地记录及产物一致，不证明来源可信、源码未变、行为正确或获准执行。调用方仍需认证授权、核对当前源码/工具/模型/设备，并在启动前防止或复查文件替换。
+
 ### 生命周期与产物
 
 - 每次实际调用创建独立 Call；记录契约哈希、因果关系、具体命令、环境、原始日志、产物身份和结构化结果。新尝试使用独立输出目录。
