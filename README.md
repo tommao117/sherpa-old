@@ -4,7 +4,7 @@
 
 Sherpa 面向用户指定的推理代码和模型：小模型选择行动，工具执行，大模型处理限定任务；通过行为验证和性能测量改进目标框架，再从运行记录中提炼通用能力。
 
-目前可运行代码准备、只读环境调查和模拟优化流程。真实环境执行与性能优化正在规划，阶段状态见[开发总览](docs/plan/overview.md)。
+目前可运行代码准备、只读环境调查和模拟优化流程，已提供固定 llama.cpp 版本的受控 GPU 冒烟试测入口。真实行为/性能优化闭环尚未验证，阶段状态见[开发总览](docs/plan/overview.md)。
 
 ## 主要能力
 
@@ -77,6 +77,26 @@ python3 -B -m sherpa.cli env test-executor --scenario normal
 运行固定的伪探测、伪构建和伪推理子进程，验证契约、产物、响应与清理。可用 `--scenario timeout` 或 `wrong-output` 检查失败路径；Run 可用 `status/events/trace/cancel` 观察。结果始终为 `synthetic`，不编译用户框架、不加载模型或使用 GPU。
 
 固定 llama.cpp 版本还支持离线命令规划：`env plan-completion task.json --locations locations.json`。只输出 `draft`，不探测工具/设备或运行程序；输入格式与约束见[环境准备设计](docs/design/environment.md)。
+
+### 受控真实冒烟（试测入口）
+
+```bash
+python3 -B -m sherpa.cli env completion-template > input.json
+```
+
+填写模板中的干净本地 llama.cpp 检查点、模型目录、GPU UUID、CUDA 架构、工具路径和预算。模板中的 Q8、请求与资源数值仅是待确认声明；此命令不检查机器。
+
+```bash
+python3 -B -m sherpa.cli env stage-completion input.json --allow-input-preparation
+```
+
+准备命令复制本地代码并读取/哈希所选权重，不下载、构建或探测 GPU。成功后返回 Run ID 和票据哈希。先审查该 Run 的 `completion-ticket.json`、`completion-plan.json`，显卡空闲且确认范围后，才能执行：
+
+```bash
+python3 -B -m sherpa.cli env run-completion RUN_ID --approve-ticket-hash TICKET_HASH
+```
+
+这一步会检查 GPU、构建并完成一次请求。缺依赖、忙卡、观测不明或预算耗尽会停止，保留日志，不重试。采用固定测试流程，不调用决策模型；成功仅表示该请求的 GPU 冒烟通过，JEV 行为和性能仍需单独验证。限定版本与试测进度见[环境准备计划](docs/plan/environment.md)。
 
 ## 文档与测试
 

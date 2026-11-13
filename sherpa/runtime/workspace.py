@@ -35,7 +35,7 @@ BINARY_SUFFIXES = {".gguf", ".safetensors", ".bin", ".pt", ".pth", ".so", ".o", 
 MAX_FILE = 2 * 1024 * 1024
 MAX_TOTAL = 16 * 1024 * 1024
 GIT_RESOURCE_SETTINGS = {"pack.threads": "1", "index.threads": "1", "pack.windowMemory": "32m",
-                         "checkout.workers": "1"}
+                         "checkout.workers": "1", "core.fsmonitor": "false", "core.hooksPath": os.devnull}
 
 
 def git(path: Path, *args, check=True, timeout_s=30, log_directory=None, file_limit_mib=32, cpu_seconds=15) -> str:

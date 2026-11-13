@@ -21,6 +21,10 @@ Keep global relationships in overviews and local details in module documents. Us
 
 Before editing, read the relevant overview and module documents. After editing, check scope, standalone readability, concision, links, and diagram consistency. Distinguish target design, implemented behavior, verified results, and open proposals without mixing their document roles.
 
+## Development flow
+
+Proceed along the agreed roadmap to a testable integration, not one helper at a time. Verify and commit coherent stages. Pause for unresolved design choices or expanded permissions; live GPU/model work requires explicit approval.
+
 ## Stage commits
 
 Commit each coherent development stage after its relevant checks pass. Review the staged diff and include only intended changes; exclude credentials, local environments, and generated data. Keep commit messages scoped to the stage. Do not push unless explicitly requested.

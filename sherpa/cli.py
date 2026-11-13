@@ -16,7 +16,7 @@ def output(value):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog="sherpa", description="Lightweight runtime prototype; no real models")
+    parser = argparse.ArgumentParser(prog="sherpa", description="Traceable runtime; real execution requires explicit approval")
     parser.add_argument("--data-root", type=Path,
                         default=Path(os.environ.get("SHERPA_DATA", Path(__file__).resolve().parents[2] / "sherpa-data")))
     commands = parser.add_subparsers(dest="command", required=True)
@@ -29,7 +29,7 @@ def main(argv=None):
     agent_commands = agents.add_subparsers(dest="agent_command", required=True)
     listing = agent_commands.add_parser("list", help="show configuration only; no provider request")
     listing.add_argument("--config", type=Path)
-    environment = commands.add_parser("env", help="inspect and plan; does not install or load models")
+    environment = commands.add_parser("env", help="inspect, plan and explicitly approve controlled smoke execution")
     env_commands = environment.add_subparsers(dest="env_command", required=True)
     plan = env_commands.add_parser("plan", help="read declarations and inspect host; save a non-executable plan")
     plan.add_argument("source", type=Path)
@@ -45,6 +45,13 @@ def main(argv=None):
     completion = env_commands.add_parser("plan-completion", help="draft pinned llama.cpp commands only; no file checks, device probes or execution")
     completion.add_argument("task", type=Path)
     completion.add_argument("--locations", required=True, type=Path, help="explicit workspace/toolchain paths in JSON")
+    env_commands.add_parser("completion-template", help="print an editable smoke input template; performs no inspection")
+    stage = env_commands.add_parser("stage-completion", help="copy pinned local code and hash the selected weight; no GPU or build")
+    stage.add_argument("input", type=Path)
+    stage.add_argument("--allow-input-preparation", action="store_true")
+    execute = env_commands.add_parser("run-completion", help="explicitly approve one staged configure/build/GPU smoke attempt")
+    execute.add_argument("run_id")
+    execute.add_argument("--approve-ticket-hash", required=True)
     fixture = env_commands.add_parser("test-executor", help="run fixed synthetic subprocess fixtures; never build/load user inputs")
     fixture.add_argument("--scenario", choices=["normal", "failure", "missing-artifact", "wrong-output", "malformed", "timeout", "slow", "output-limit"], default="normal")
     fixture.add_argument("--seconds", type=float, default=30)
@@ -95,7 +102,27 @@ def main(argv=None):
                                         load_document(args.approval) if args.approval else None)
             output(report)
             return 0 if report["status"] == "valid" else 2
+        if args.command == "env" and args.env_command == "completion-template":
+            from .runtime.completion import completion_template
+            output(completion_template())
+            return 0
         store = Store(args.data_root)
+        if args.command == "env" and args.env_command in {"stage-completion", "run-completion"}:
+            from .runtime.completion import stage_completion, run_completion
+            from .runtime.execution_contract import load_document
+            if args.env_command == "stage-completion":
+                value = load_document(args.input)
+                if not isinstance(value, dict) or set(value) != {"task", "pinned_source", "tools"}:
+                    raise ValueError("staging input must contain exactly task, pinned_source and tools")
+                run = stage_completion(store, value["task"], value["pinned_source"], value["tools"],
+                                       allow_input_preparation=args.allow_input_preparation)
+            else:
+                run = run_completion(store, args.run_id, args.approve_ticket_hash)
+            state = run.state()
+            output({"run_id": run.id, "status": state["status"], "phase": state["phase"],
+                    "ticket_hash": state.get("ticket_hash"), "result_status": state.get("result_status"),
+                    "reason": state.get("stop_reason"), "cost": state["cost"], "readiness": state.get("readiness")})
+            return 0 if state["status"] in {"created", "completed"} else 2
         if args.command == "env" and args.env_command == "test-executor":
             from .runtime.fixture_execution import fixture_demo
             run = fixture_demo(store, args.scenario, seconds=args.seconds, max_calls=args.max_calls,
