@@ -76,6 +76,8 @@ python3 -B -m sherpa.cli env test-executor --scenario normal
 
 运行固定的伪探测、伪构建和伪推理子进程，验证契约、产物、响应与清理。可用 `--scenario timeout` 或 `wrong-output` 检查失败路径；Run 可用 `status/events/trace/cancel` 观察。结果始终为 `synthetic`，不编译用户框架、不加载模型或使用 GPU。
 
+固定 llama.cpp 版本还支持离线命令规划：`env plan-completion task.json --locations locations.json`。只输出 `draft`，不探测工具/设备或运行程序；输入格式与约束见[环境准备设计](docs/design/environment.md)。
+
 ## 文档与测试
 
 - [整体设计与架构图](docs/design/overview.md)

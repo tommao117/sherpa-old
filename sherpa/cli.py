@@ -42,6 +42,9 @@ def main(argv=None):
     check.add_argument("task", type=Path, help="Task JSON with versioned execution contract")
     check.add_argument("--action", required=True, type=Path, help="probe/build/run_once action JSON")
     check.add_argument("--approval", type=Path, help="explicit task-hash-bound approval data; not an authenticated execution permit")
+    completion = env_commands.add_parser("plan-completion", help="draft pinned llama.cpp commands only; no file checks, device probes or execution")
+    completion.add_argument("task", type=Path)
+    completion.add_argument("--locations", required=True, type=Path, help="explicit workspace/toolchain paths in JSON")
     fixture = env_commands.add_parser("test-executor", help="run fixed synthetic subprocess fixtures; never build/load user inputs")
     fixture.add_argument("--scenario", choices=["normal", "failure", "missing-artifact", "wrong-output", "malformed", "timeout", "slow", "output-limit"], default="normal")
     fixture.add_argument("--seconds", type=float, default=30)
@@ -80,6 +83,12 @@ def main(argv=None):
             from .agent import Config
             output(Config.load(args.config).describe())
             return 0
+        if args.command == "env" and args.env_command == "plan-completion":
+            from .runtime.execution_contract import load_document
+            from .platform.llama_completion import plan_completion
+            report = plan_completion(load_document(args.task), load_document(args.locations))
+            output(report)
+            return 0 if report["status"] == "draft" else 2
         if args.command == "env" and args.env_command == "check-contract":
             from .runtime.execution_contract import load_document, validate_execution
             report = validate_execution(load_document(args.task), load_document(args.action),

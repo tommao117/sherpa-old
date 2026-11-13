@@ -39,7 +39,7 @@
 
 ## 执行契约
 
-调查输出是建议；执行契约是供工具消费的显式任务快照。E1 校验声明与文件元数据，输出待执行动作；E2 负责认证授权、复核实际环境并执行。原只读调查入口保持不变。
+调查输出是建议；执行契约是供工具消费的显式任务快照。E1 校验声明与文件元数据，E2 验证固定伪进程链，E3 接入真实适配器、执行授权和环境复核。原只读调查入口保持不变。
 
 | 内容 | 契约要求 | 所属对象 |
 |---|---|---|
@@ -119,6 +119,17 @@ flowchart LR
 - 清理异常按 `cleanup_failed` 锁止后续启动；Run 只允许一次执行器认领，不能重建实例重置预算。强杀留下的 Run 标记为 interrupted，不伪造终态或重放。
 
 真实目标的授权认证、注册适配器、设备验证及恢复在 E3 接入前完成；夹具中的伪 prepare 标识不作为真实 Git commit 证明。
+
+### llama.cpp 命令规划接口
+
+`plan_completion(task, locations)` 是纯函数，只规划已核对的上游 commit `0fb8f1577027`。该版本的 `llama-cli` 内含 HTTP server；这里选择同框架的 `llama-completion`，保留无服务的单次请求范围。
+
+- Task 选用 `llama-completion` v1 适配器，构建参数显式指定数字 `cuda_arch`；请求给出 `seed/max_tokens/ctx_size/gpu_layers/temperature`。初版只支持一个自包含 GGUF、一个 GPU UUID 和温度 0 的冒烟契约。
+- `locations` 提供绝对的 `run_root/source/build/scratch/cmake/make/cc/cxx/nvcc` 路径。输出三条 `argv/cwd/env` 草案，环境不继承，固定构建目标，关闭 UI 下载、自动 fit、warmup 和交互模式。
+- 输出为 `draft`，附 Task/plan 哈希和必需运行检查。不读取这些路径、不确认权限、不执行命令；E1 校验及真实执行前复核仍不可省略。输入示例见 `tests/test_llama_completion.py`。
+- `parse_completion_log(text, complete=...)` 按该版本 stderr 格式提取原行证据。设备枚举不等于使用设备，prompt token 不等于生成 token；`eval_runs` 单列。缺失、重复或截断日志返回 `inconclusive`，完整信号仅记 `evidence_present`。
+
+源码依据：`tools/CMakeLists.txt`、`tools/completion/CMakeLists.txt`、`common/arg.cpp`、`src/llama.cpp`、`src/llama-model.cpp`、`src/llama-context.cpp`。日志证据需与真实 Call、正常退出及设备映射关联后才能用于冒烟判定。
 
 ### 生命周期与产物
 
