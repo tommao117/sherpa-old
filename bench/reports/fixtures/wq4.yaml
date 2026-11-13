@@ -1,6 +1,0 @@
-framework: llama.cpp
-base: b12242
-model_dtype: q4_k_m
-args: ["-np", "32", "-kvu", "-c", "18432", "-fit", "off", "-fa", "on", "-ub", "512", "-b", "2048"]
-env: {}
-note: "reference config + Q4_K_M weights (lossy)"

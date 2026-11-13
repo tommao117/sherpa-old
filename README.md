@@ -1,49 +1,89 @@
 # Sherpa
 
-自迭代推理优化框架。它不做推理，而是在给定的 模型 × 卡型 × 推理框架 上完成部署、bench、profile、优化和交付，并在每次使用后让自己变得更强。
+**小模型主导、实验验证、双环迭代的推理优化框架。**
 
-**核心命题**：Sherpa 的"自身"（代码 + 资产）由 agent 不断改写；一次改写只有在固定的任务基准（Task Bench）上证明变强了，才会被保留。
+Sherpa 面向用户指定的推理代码和模型：小模型选择行动，工具执行，大模型处理限定任务；通过行为验证和性能测量改进目标框架，再从运行记录中提炼通用能力。
 
-## 当前阶段
+目前可运行代码准备、只读环境调查和模拟优化流程。真实环境执行与性能优化正在规划，阶段状态见[开发总览](docs/plan/overview.md)。
 
-```
-v0 跑通 ──► 独立评审 ──► 设计 v1 ──► M0 造尺子 ◄── 现在（实现完成，待评审）──► M1 诚实的第 0 版 ──► M2 自进化 ──► M3 扩展
-```
+## 主要能力
 
-- **M0**：评判者（`kernel/`）和 llama.cpp 的 Task Bench（`bench/`）已实现，并在本机（RTX 5070 Ti，WSL2）上标定。任务文档与执行记录：[`docs/tasks/m0-judge.md`](docs/tasks/m0-judge.md)
-- 现阶段只用 llama.cpp 打磨 Sherpa
+- **固定输入**：HTTPS Git 或本地框架目录与模型目录分开管理，独立工作区固定 commit。
+- **模型驱动调查**：按需读文档、定位源码、观察机器，形成有依据的运行方案。
+- **可观察、可续跑**：记录决策、工具结果、版本和成本；支持状态查询、取消、证据恢复及草案修正。
+- **可替换 Agent**：模型提供方经 Backend 接入，角色内串行故障切换。
 
-## 文档
+## 快速开始
 
-| 文档 | 内容 | 状态 |
-|---|---|---|
-| [`docs/design.md`](docs/design.md) | 顶层设计 v1；§3（评判者）已按 M0 实测修订 | **现行** |
-| [`docs/decisions.md`](docs/decisions.md) | 决策（D31–D42 为 M0 实施决定，**待评审**）、v0 评审结论、待定问题、环境现状 | **现行** |
-| [`docs/tasks/m0-judge.md`](docs/tasks/m0-judge.md) | M0 任务：定义、验收、执行记录 | **待评审** |
-| [`kernel/README.md`](kernel/README.md) | 评判者：模块与命令 | 现行 |
-| [`bench/README.md`](bench/README.md) | 题库：结构、交付物格式、得分、人工流程 | 现行 |
-| [`bench/reports/`](bench/reports/) | 压测客户端选型、oracle 标定、代码题可行性、得分方差 | 现行 |
-| [`docs/devlog.md`](docs/devlog.md)、[`docs/retro-v0.md`](docs/retro-v0.md) | v0 原始记录 | 历史 |
+环境：Linux/WSL2、Python 3.11+、Git。在项目根目录直接运行，无需安装目标模型依赖。
 
-## 布局
-
-```
-kernel/        评判者（人改）：独立项目 sherpa-kernel，命令 sherpa-judge
-bench/         题库数据（人改，封存）
-sherpa/        v0 Python 包（M1 搬迁、改为调用 kernel）
-assets/        v0 资产
-crates/        原生代码（cupti-trace）
-docs/
-
-../sherpa-data/   运行时数据（不进仓库）：repos/、judge/（构建、模型、记录）
-```
-
-## 快速开始（评判者）
+### 运行模拟任务
 
 ```bash
-cd kernel && uv venv -p 3.12 .venv && uv pip install -p .venv -e ".[test]"
-.venv/bin/pytest
-.venv/bin/sherpa-judge doctor                         # 机器体检
-.venv/bin/sherpa-judge bench list                     # 题目与标定状态
-.venv/bin/sherpa-judge score cfg-qwen3-0.6b-chat-c32 my-deliverable.yaml --sherpa-commit <sha>
+python3 -B -m sherpa.cli demo --scenario normal
+```
+
+模拟结果标记为 `synthetic`。输出的 Run ID 用于查询和取消：
+
+```bash
+python3 -B -m sherpa.cli status <run-id>
+python3 -B -m sherpa.cli events <run-id> --tail 20
+python3 -B -m sherpa.cli trace <run-id>
+python3 -B -m sherpa.cli cancel <run-id> --reason "停止测试"
+```
+
+数据默认位于仓库外的 `../sherpa-data/`，可用 `SHERPA_DATA` 或子命令前的 `--data-root` 指定。
+
+### 准备框架代码
+
+以下示例要求模型已位于本地目录；可将框架 URL 换成本地源码目录。
+
+```bash
+python3 -B -m sherpa.cli env prepare-code \
+  --framework https://github.com/ggml-org/llama.cpp \
+  --model /path/to/model --device gpu
+```
+
+此步骤只准备代码并固定版本，不调用决策模型、不编译或加载目标模型。可用 `--revision` 指定框架版本。
+
+### 发起只读调查
+
+需先准备可用的 CodeBuddy CLI 和 provider 访问权限。`agent list` 查看配置，不发送请求；配置文件为 `sherpa/agent/models.toml`，候选顺序见[Agent 计划](docs/plan/agent.md)。
+
+```bash
+python3 -B -m sherpa.cli env resume <prepare-run-id> \
+  --allow-model-calls --allow-unpriced --model-budget 1 \
+  --seconds 300 --max-calls 24 --max-rounds 12
+```
+
+该命令会将选中的文本证据发送给远端决策模型。预算为本段新增额度；美元阈值基于已报告费用，不能保证未知账单硬封顶。方案位于 `runs/<run-id>/environment/proposal.json`，标记为 `proposed/unverified`，不会执行其中的安装步骤。
+
+也可用 `env explore --framework ... --model ...` 搭配相同授权和预算参数，从新任务开始；`env plan /path/to/source` 仅扫描本地声明与机器，不调用模型。各命令的参数通过 `--help` 查看。
+
+### 离线检查执行契约
+
+```bash
+python3 -B -m sherpa.cli env check-contract task.json --action action.json --approval approval.json
+```
+
+输出字段诊断和待执行声明，不创建 Run、不调用模型或执行程序。JSON 格式见[执行契约](docs/design/environment.md)；检查通过仍需执行前认证授权与复核环境。
+
+### 验证执行器
+
+```bash
+python3 -B -m sherpa.cli env test-executor --scenario normal
+```
+
+运行固定的伪探测、伪构建和伪推理子进程，验证契约、产物、响应与清理。可用 `--scenario timeout` 或 `wrong-output` 检查失败路径；Run 可用 `status/events/trace/cancel` 观察。结果始终为 `synthetic`，不编译用户框架、不加载模型或使用 GPU。
+
+## 文档与测试
+
+- [整体设计与架构图](docs/design/overview.md)
+- [开发路线与模块计划](docs/plan/overview.md)
+- [文档写作规范](AGENTS.md)
+
+离线回归：
+
+```bash
+python3 -B -m unittest discover -s tests -q
 ```

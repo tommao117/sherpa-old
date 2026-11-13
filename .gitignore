@@ -1,23 +1,53 @@
-# Python
+# Python environments and packaging
 __pycache__/
 *.py[cod]
 *.egg-info/
+.eggs/
 build/
 dist/
 .venv/
+.venv-*/
 venv/
 
-# Runtime data (lives in ../sherpa-data by default; ignored here in case SHERPA_DATA points inside the repo)
-sherpa-data/
-/data/
+# Test, lint, and coverage output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+/coverage.xml
 
-# Native build output
-crates/**/build/
+# Compiled native artifacts
 *.so
+*.pyd
+*.dylib
+*.dll
 *.o
+*.obj
+*.a
+
+# Local runtime data and model downloads (normally stored outside the repo)
+/sherpa-data/
+/data/
+/runs/
+/logs/
+/artifacts/
+/models/
+/checkpoints/
+
+# Local environment values; keep sanitized examples versionable
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.template
 
 # Editors / OS
 .vscode/
 .idea/
 *.swp
+*.swo
 .DS_Store

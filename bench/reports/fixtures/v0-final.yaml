@@ -1,6 +1,0 @@
-framework: llama.cpp
-base: b12242
-model_dtype: bf16
-args: ["-np", "32", "-bs"]
-env: {}
-note: "Sherpa v0 final deliverable (t20261110-110453 on RTX 4090): -np 32 + backend sampling, default context"

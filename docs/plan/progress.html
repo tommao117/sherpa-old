@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sherpa · 全局进展图</title>
+  <style>
+    :root {
+      --bg: #ffffff; --panel: #f8fafc; --text: #172b3a; --muted: #526474;
+      --border: #dce4eb; --accent: #245bc0; --accent-soft: #eff5ff;
+      --success: #176548; --success-soft: #eff9f3;
+      --warning: #855314; --warning-soft: #fff8eb;
+      --purple: #6d46a3; --purple-soft: #f6f2fb;
+      --max: 760px; --radius: 8px;
+      --font: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0 auto; padding: 28px 24px; max-width: var(--max); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 20px; line-height: 1.4; }
+    h2 { font-size: 16px; }
+    h3 { font-size: 15px; }
+    a { color: var(--accent); text-underline-offset: 3px; }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+    .eyebrow { color: var(--muted); font-size: 12px; letter-spacing: .08em; margin-bottom: 8px; }
+    .intro { margin-top: 9px; color: var(--muted); }
+    .cv-callout { margin: 18px 0 22px; padding: 12px 16px; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: var(--radius); }
+    .cv-callout strong { color: var(--accent); }
+    .cv-callout p { font-size: 13px; margin-top: 3px; }
+    .section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+    .section-heading span { color: var(--muted); font-size: 12px; }
+    .cv-flow-visual { list-style: none; margin: 0; padding: 0; }
+    .step { display: grid; grid-template-columns: 32px 1fr; gap: 12px; position: relative; padding-bottom: 13px; }
+    .step:not(:last-child)::before { content: ""; position: absolute; left: 15px; top: 32px; bottom: 0; border-left: 2px solid var(--border); }
+    .step.future:not(:last-child)::before { border-left-style: dashed; }
+    .marker { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--panel); border: 1px solid var(--border); color: var(--muted); }
+    .card { border: 1px solid var(--border); border-radius: var(--radius); padding: 11px 14px; background: var(--bg); min-width: 0; }
+    .card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+    .card p { margin-top: 4px; font-size: 13px; color: var(--muted); }
+    .badge { padding: 2px 8px; border-radius: var(--radius); font-size: 12px; background: var(--panel); color: var(--muted); white-space: nowrap; }
+    .ready .marker, .ready .badge { color: var(--success); background: var(--success-soft); border-color: var(--success); }
+    .partial .marker, .partial .badge { color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
+    .current .marker, .current .badge { color: var(--warning); background: var(--warning-soft); border-color: var(--warning); }
+    .current .card { border-color: var(--warning); background: var(--warning-soft); }
+    .simulated .badge { color: var(--purple); background: var(--purple-soft); }
+    .position { margin: 0 0 12px 44px; display: flex; align-items: center; gap: 9px; color: var(--warning); font-size: 12px; font-weight: 700; }
+    .position::before { content: ""; width: 22px; border-top: 2px solid var(--warning); }
+    .sequence { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: 9px; font-size: 12px; color: var(--warning); }
+    .sequence span { border: 1px solid var(--border); border-radius: var(--radius); padding: 2px 7px; background: var(--bg); }
+    .sequence b { font-weight: 400; }
+    .finish { margin-left: 44px; border-top: 2px solid var(--accent); padding-top: 9px; }
+    .finish strong { color: var(--accent); font-size: 14px; }
+    .finish p { color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .cv-section { margin-top: 22px; }
+    .outer { border: 1px solid var(--border); border-left: 3px solid var(--purple); border-radius: var(--radius); padding: 12px 15px; }
+    .outer .badge { color: var(--purple); background: var(--purple-soft); }
+    .outer p { color: var(--muted); font-size: 13px; margin-top: 7px; }
+    .next { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; border-top: 1px solid var(--border); padding-top: 15px; }
+    .next h3 { font-size: 14px; }
+    .next p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .caption { font-size: 12px; color: var(--muted); margin-top: 18px; }
+    @media (max-width: 480px) {
+      body { padding: 20px 14px; }
+      .section-heading { display: block; }
+      .step { grid-template-columns: 28px 1fr; gap: 9px; }
+      .marker { width: 28px; height: 28px; }
+      .step:not(:last-child)::before { left: 13px; top: 28px; }
+      .position, .finish { margin-left: 37px; }
+      .card { padding: 10px 12px; }
+      .next { grid-template-columns: 1fr; gap: 12px; }
+    }
+    @media print {
+      body { max-width: none; padding: 12mm; }
+      .card, .outer, .next { break-inside: avoid; }
+      * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body class="cv-article-illustration">
+  <main>
+    <header>
+      <p class="eyebrow">SHERPA / 进度快照 / 2026-11-13</p>
+      <h1>离全局跑通，还有哪几关？</h1>
+      <p class="intro">基础设施已具备，真实链路正从“读资料、出方案”转向“执行并验证”。</p>
+    </header>
+
+    <div class="cv-callout">
+      <strong>首次真实优化闭环，还需打通 3 个关键环节。</strong>
+      <p>真实运行 → 行为与性能基线 → 候选优化验证。自动外环是更远一层目标。</p>
+    </div>
+
+    <section aria-labelledby="mainline">
+      <div class="section-heading">
+        <h2 id="mainline">主线 · 从用户任务到真实优化结果</h2>
+        <span>状态表示验证程度，不代表工时比例</span>
+      </div>
+      <ol class="cv-flow-visual">
+        <li class="step ready">
+          <span class="marker" aria-hidden="true">01</span>
+          <article class="card">
+            <div class="card-head"><h3>运行底座与 Agent 接入</h3><span class="badge">基本具备</span></div>
+            <p>固定代码、隔离工作区、调用追踪、预算、取消与清理；真实决策调用已接通。</p>
+          </article>
+        </li>
+        <li class="step partial">
+          <span class="marker" aria-hidden="true">02</span>
+          <article class="card">
+            <div class="card-head"><h3>只读调查与运行方案</h3><span class="badge">真实局部通过</span></div>
+            <p>双输入、证据查阅、续跑及草案修正已可用；模型选择与运行验收仍需明确。</p>
+          </article>
+        </li>
+      </ol>
+      <p class="position">当前位置：执行契约与执行器草案已形成，尚未实现</p>
+      <ol class="cv-flow-visual" start="3">
+        <li class="step future current">
+          <span class="marker" aria-hidden="true">03</span>
+          <article class="card">
+            <div class="card-head"><h3>关卡一 · 把原始实现真正跑起来</h3><span class="badge">设计草案</span></div>
+            <p>由 Sherpa 构建并执行固定请求，验证目标设备，保留可复现记录。</p>
+            <div class="sequence" aria-label="实施顺序：契约校验、伪进程测试、真实构建和请求">
+              <span>E1 契约校验</span><b aria-hidden="true">→</b><span>E2 伪进程测试</span><b aria-hidden="true">→</b><span>E3 真实请求</span>
+            </div>
+          </article>
+        </li>
+        <li class="step future">
+          <span class="marker" aria-hidden="true">04</span>
+          <article class="card">
+            <div class="card-head"><h3>关卡二 · 建立行为与性能基线</h3><span class="badge">真实链路未建立</span></div>
+            <p>固定测试集、行为容差、负载和环境；测量可重复，缺证据不算通过。</p>
+          </article>
+        </li>
+        <li class="step future simulated">
+          <span class="marker" aria-hidden="true">05</span>
+          <article class="card">
+            <div class="card-head"><h3>关卡三 · 验证一次真实优化候选</h3><span class="badge">仅模拟链具备</span></div>
+            <p>限定修改范围 → 行为检查 → 性能对比 → 接受或拒绝 → 交付最好有效版本。</p>
+          </article>
+        </li>
+      </ol>
+      <div class="finish">
+        <strong>目标 A：单个任务的真实优化内环跑通</strong>
+        <p>能客观接受或拒绝候选，且结果可复现。跑通闭环与取得性能提升分别验收。</p>
+      </div>
+    </section>
+
+    <section class="cv-section outer" id="outer-loop" aria-labelledby="outer-heading">
+      <div class="card-head"><h2 id="outer-heading">目标 B：反思与知识外环接通</h2><span class="badge">人工实践 / 存储接口</span></div>
+      <p>已有人工反思和提案记录；仍需接通“分析 trace → 改进提案 → 验证与人审 → 采用新版本 → 后续任务复验”。</p>
+      <p>可与主线并行推进。自动化仍保留人审，不以建知识库代替真实运行。</p>
+    </section>
+
+    <section class="cv-section next" id="next-step" aria-label="下一步与主要不确定性">
+      <div>
+        <h3>紧接着做什么</h3>
+        <p>实现 E1 契约校验与完整诊断，再用伪进程验证 E2 的执行和清理。</p>
+      </div>
+      <div>
+        <h3>真实运行前要确认什么</h3>
+        <p>模型文件集合、请求与验收、资源授权。JEV 的架构与概率接口兼容性仍待验证。</p>
+      </div>
+    </section>
+
+    <p class="caption">依据：<a href="overview.md">开发总览</a> · <a href="environment.md">环境准备</a> · <a href="optimization.md">优化与评测</a> · <a href="reflection.md">反思与知识</a>。本图为日期快照，最新状态以模块计划为准；三关工作量不同，不据此推算百分比或完成日期。</p>
+  </main>
+</body>
+</html>

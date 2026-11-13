@@ -1,0 +1,39 @@
+version = 1
+
+[backends.codebuddy]
+type = "codebuddy_cli"
+command = "codebuddy"
+max_output_mib = 16
+
+[pools]
+daily = ["deepseek-v4.1-flash", "GPT6 Luna", "hy4"]
+expert = ["Claude-Opus-5.5", "GPT-6-Astra", "Claude-Opus-5", "GPT-6.1-Sol"]
+
+[models.hy4]
+backend = "codebuddy"
+enabled = true
+model_id = "hy4std"
+
+[models."deepseek-v4.1-flash"]
+backend = "codebuddy"
+model_id = "deepseek-v4.1-flash"
+
+[models."GPT6 Luna"]
+backend = "codebuddy"
+model_id = "gpt-6-luna"
+
+[models."Claude-Opus-5.5"]
+backend = "codebuddy"
+model_id = "claude-opus-5.5"
+
+[models."GPT-6-Astra"]
+backend = "codebuddy"
+model_id = "gpt-6-astra"
+
+[models."Claude-Opus-5"]
+backend = "codebuddy"
+model_id = "claude-opus-5"
+
+[models."GPT-6.1-Sol"]
+backend = "codebuddy"
+model_id = "gpt-6.1-sol"

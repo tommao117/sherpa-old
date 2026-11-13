@@ -1,6 +1,0 @@
-framework: llama.cpp
-base: b12242
-model_dtype: bf16
-args: []
-env: {}
-source: framework defaults at the task base (floor)
